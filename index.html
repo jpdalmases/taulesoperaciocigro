@@ -65,11 +65,11 @@
             line-height: 1.5;
         }
 
-        .campo-grups {
+        .grups-campo {
             grid-column: 1 / -1;
         }
 
-        .exemple {
+        .ajuda {
             font-size: 13px;
             color: #777;
             margin-top: 3px;
@@ -197,6 +197,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .grups-campo {
+                grid-column: auto;
+            }
+
             .taula {
                 width: 160px;
             }
@@ -225,6 +229,7 @@
                 >
             </div>
 
+
             <div class="campo">
                 <label for="capacitat">
                     Capacitat màxima per taula
@@ -238,22 +243,33 @@
                 >
             </div>
 
-            <div class="campo campo-grups">
-                <label for="grups">
+
+            <div class="campo grups-campo">
+
+                <label for="textGrups">
                     Grups
                 </label>
 
                 <textarea
-                    id="grups"
-                    placeholder="Escriu un grup per línia..."
+                    id="textGrups"
+                    placeholder="Escriu un grup per línia, amb el nombre de persones al final.
+
+Exemple:
+Família Garcia 4
+Amics Joan 6
+Club de futbol 8
+Escola 3
+Pares 5"
                 ></textarea>
 
-                <div class="exemple">
-                    Format: Nom del grup + espai + número de persones
+                <div class="ajuda">
+                    Escriu un grup per línia i posa el nombre de persones al final.
                 </div>
+
             </div>
 
         </div>
+
 
         <button onclick="calcular()">
             Distribuir grups
@@ -335,37 +351,39 @@
 
                 linia = linia.trim();
 
-                // Ignorar línies buides
                 if (!linia) {
                     continue;
                 }
 
                 const parts = linia.split(/\s+/);
 
-                // L'últim element ha de ser el número
-                const mida = parseInt(
-                    parts[parts.length - 1]
-                );
+                const mida =
+                    parseInt(parts[parts.length - 1]);
 
                 if (isNaN(mida)) {
+
                     throw new Error(
                         `Format incorrecte a la línia: "${linia}"`
                     );
                 }
 
-                const nom = parts
-                    .slice(0, -1)
-                    .join(" ");
+                if (mida <= 0) {
 
-                if (!nom) {
                     throw new Error(
-                        `Falta el nom del grup a la línia: "${linia}"`
+                        `El nombre de persones del grup `
+                        + `"${linia}" ha de ser superior a 0.`
                     );
                 }
 
-                if (mida <= 0) {
+                const nom =
+                    parts
+                        .slice(0, -1)
+                        .join(" ");
+
+                if (!nom) {
+
                     throw new Error(
-                        `La mida del grup "${nom}" ha de ser superior a 0.`
+                        `Falta el nom del grup a la línia: "${linia}"`
                     );
                 }
 
@@ -385,7 +403,8 @@
 
         function ordreCentral(numTaules) {
 
-            const centre = (numTaules - 1) / 2;
+            const centre =
+                (numTaules - 1) / 2;
 
             const ordre = [];
 
@@ -415,6 +434,7 @@
         ) {
 
             // Ordenar de grup més gran a més petit
+
             grups = [...grups].sort(
                 (a, b) => b.mida - a.mida
             );
@@ -424,15 +444,18 @@
             const ocupacio = [];
 
             for (let i = 0; i < numTaules; i++) {
+
                 taules.push([]);
                 ocupacio.push(0);
             }
 
 
-            const ordre = ordreCentral(numTaules);
+            const ordre =
+                ordreCentral(numTaules);
 
 
             // Repartir grups
+
             for (const grup of grups) {
 
                 let millorTaula = null;
@@ -460,25 +483,27 @@
                             resultat > millorResultat
                         ) {
 
-                            millorResultat = resultadoSeguro(resultat);
-                            millorTaula = t;
+                            millorResultat =
+                                resultat;
+
+                            millorTaula =
+                                t;
                         }
                     }
                 }
 
 
-                if (melhorTaulaSeguro(millorTaula) === null) {
+                if (millorTaula === null) {
 
                     throw new Error(
-                        `El grup "${grup.nom}" (${grup.mida}) ` +
-                        `no cap a cap taula.`
+                        `El grup "${grup.nom}" (${grup.mida}) `
+                        + `no cap a cap taula.`
                     );
                 }
 
 
-                taules[melhorTaula].push(grup);
-
-                ocupacio[melhorTaula] += grup.mida;
+                taules[millorTaula].push(grup);
+		ocupacio[millorTaula] += grup.mida;
             }
 
 
@@ -516,9 +541,11 @@
                 i++
             ) {
 
-                const posicio = ordre[i];
+                const posicio =
+                    ordre[i];
 
-                const dada = dades[i];
+                const dada =
+                    dades[i];
 
                 taulesNoves[posicio] =
                     dada.taula;
@@ -532,19 +559,6 @@
                 taules: taulesNoves,
                 ocupacio: ocupacioNova
             };
-        }
-
-
-        // =====================================================
-        // FUNCIONS AUXILIARS
-        // =====================================================
-
-        function resultadoSeguro(valor) {
-            return valor;
-        }
-
-        function melhorTaulaSeguro(valor) {
-            return valor;
         }
 
 
@@ -567,7 +581,8 @@
             const contenidor =
                 document.createElement("div");
 
-            contenidor.className = "taules";
+            contenidor.className =
+                "taules";
 
 
             const colors = {};
@@ -584,7 +599,8 @@
                 const taula =
                     document.createElement("div");
 
-                taula.className = "taula";
+                taula.className =
+                    "taula";
 
 
                 // -----------------------------
@@ -663,7 +679,8 @@
                     const bloc =
                         document.createElement("div");
 
-                    bloc.className = "grup";
+                    bloc.className =
+                        "grup";
 
 
                     bloc.style.backgroundColor =
@@ -686,6 +703,7 @@
 
 
             // Afegir resum
+
             crearResum(
                 taules,
                 ocupacio,
@@ -711,7 +729,8 @@
             const resum =
                 document.createElement("div");
 
-            resum.className = "resum";
+            resum.className =
+                "resum";
 
 
             const titol =
@@ -750,9 +769,9 @@
 
 
                 titolTaula.textContent =
-                    `Taula ${i + 1} — ` +
-                    `${ocupacio[i]}/${capacitat} ` +
-                    `(${percent}%)`;
+                    `Taula ${i + 1} — `
+                    + `${ocupacio[i]}/${capacitat} `
+                    + `(${percent}%)`;
 
 
                 taula.appendChild(titolTaula);
@@ -768,8 +787,8 @@
 
 
                     grupElement.textContent =
-                        `- ${grup.nom}: ` +
-                        `${grup.mida}`;
+                        `- ${grup.nom}: `
+                        + `${grup.mida}`;
 
 
                     taula.appendChild(grupElement);
@@ -797,11 +816,14 @@
                 document.getElementById("missatge");
 
 
-            element.textContent = text;
+            element.textContent =
+                text;
 
-            element.className = tipus;
+            element.className =
+                tipus;
 
-            element.style.display = "block";
+            element.style.display =
+                "block";
         }
 
 
@@ -810,7 +832,8 @@
             const element =
                 document.getElementById("missatge");
 
-            element.style.display = "none";
+            element.style.display =
+                "none";
         }
 
 
@@ -841,16 +864,15 @@
                     );
 
 
-                // Agafar directament el text del textarea
+                // Agafar el text del textarea
+
                 const text =
                     document.getElementById(
-                        "grups"
+                        "textGrups"
                     ).value;
 
 
-                // -----------------------------
-                // VALIDACIONS
-                // -----------------------------
+                // Validacions
 
                 if (
                     isNaN(numTaules)
@@ -884,9 +906,7 @@
                 }
 
 
-                // -----------------------------
-                // LLEGIR GRUPS
-                // -----------------------------
+                // Llegir grups
 
                 const grups =
                     llegirGrups(text);
@@ -895,14 +915,12 @@
                 if (grups.length === 0) {
 
                     throw new Error(
-                        "No s'ha introduït cap grup."
+                        "No s'ha trobat cap grup."
                     );
                 }
 
 
-                // -----------------------------
-                // TOTAL PERSONES
-                // -----------------------------
+                // Total persones
 
                 const totalPersones =
                     grups.reduce(
@@ -918,33 +936,29 @@
                 ) {
 
                     throw new Error(
-                        "No hi ha prou cadires " +
-                        "per tothom."
+                        "No hi ha prou cadires "
+                        + "per a tothom."
                     );
                 }
 
 
-                // -----------------------------
-                // COMPROVAR GRUPS INDIVIDUALS
-                // -----------------------------
+                // Comprovar grups individuals
 
                 for (const grup of grups) {
 
                     if (grup.mida > capacitat) {
 
                         throw new Error(
-                            `El grup "${grup.nom}" ` +
-                            `té ${grup.mida} persones ` +
-                            `i no cap en una taula ` +
-                            `de ${capacitat}.`
+                            `El grup "${grup.nom}" `
+                            + `té ${grup.mida} persones `
+                            + `i no cap en una taula `
+                            + `de ${capacitat}.`
                         );
                     }
                 }
 
 
-                // -----------------------------
-                // REPARTIR
-                // -----------------------------
+                // Repartir
 
                 const resultat =
                     repartirGrups(
@@ -954,9 +968,7 @@
                     );
 
 
-                // -----------------------------
-                // DIBUIXAR
-                // -----------------------------
+                // Dibuixar
 
                 dibuixarTaules(
                     resultat.taules,
@@ -970,12 +982,14 @@
                     "info"
                 );
 
+
             } catch (error) {
 
                 mostrarMissatge(
                     error.message,
                     "error"
                 );
+
 
                 document.getElementById(
                     "resultat"
