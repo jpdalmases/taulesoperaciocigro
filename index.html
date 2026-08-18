@@ -50,11 +50,29 @@
         }
 
         input[type="number"],
-        input[type="file"] {
+        textarea {
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 7px;
             font-size: 16px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .campo-grups {
+            grid-column: 1 / -1;
+        }
+
+        .exemple {
+            font-size: 13px;
+            color: #777;
+            margin-top: 3px;
         }
 
         button {
@@ -220,16 +238,19 @@
                 >
             </div>
 
-            <div class="campo">
-                <label for="fitxer">
-                    Fitxer de grups (.txt)
+            <div class="campo campo-grups">
+                <label for="grups">
+                    Grups
                 </label>
 
-                <input
-                    type="file"
-                    id="fitxer"
-                    accept=".txt"
-                >
+                <textarea
+                    id="grups"
+                    placeholder="Escriu un grup per línia..."
+                ></textarea>
+
+                <div class="exemple">
+                    Format: Nom del grup + espai + número de persones
+                </div>
             </div>
 
         </div>
@@ -301,7 +322,7 @@
 
 
         // =====================================================
-        // LLEGIR FITXER
+        // LLEGIR GRUPS DES DEL TEXT
         // =====================================================
 
         function llegirGrups(text) {
@@ -314,13 +335,17 @@
 
                 linia = linia.trim();
 
+                // Ignorar línies buides
                 if (!linia) {
                     continue;
                 }
 
                 const parts = linia.split(/\s+/);
 
-                const mida = parseInt(parts[parts.length - 1]);
+                // L'últim element ha de ser el número
+                const mida = parseInt(
+                    parts[parts.length - 1]
+                );
 
                 if (isNaN(mida)) {
                     throw new Error(
@@ -331,6 +356,18 @@
                 const nom = parts
                     .slice(0, -1)
                     .join(" ");
+
+                if (!nom) {
+                    throw new Error(
+                        `Falta el nom del grup a la línia: "${linia}"`
+                    );
+                }
+
+                if (mida <= 0) {
+                    throw new Error(
+                        `La mida del grup "${nom}" ha de ser superior a 0.`
+                    );
+                }
 
                 grups.push({
                     nom: nom,
@@ -378,20 +415,16 @@
         ) {
 
             // Ordenar de grup més gran a més petit
-
             grups = [...grups].sort(
                 (a, b) => b.mida - a.mida
             );
 
 
             const taules = [];
-
             const ocupacio = [];
 
             for (let i = 0; i < numTaules; i++) {
-
                 taules.push([]);
-
                 ocupacio.push(0);
             }
 
@@ -400,11 +433,9 @@
 
 
             // Repartir grups
-
             for (const grup of grups) {
 
                 let millorTaula = null;
-
                 let millorResultat = null;
 
 
@@ -429,9 +460,7 @@
                             resultat > millorResultat
                         ) {
 
-                            millorResultat =
-                                resultadoSeguro(resultat);
-
+                            millorResultat = resultadoSeguro(resultat);
                             millorTaula = t;
                         }
                     }
@@ -447,9 +476,9 @@
                 }
 
 
-                taules[millorTaula].push(grup);
+                taules[melhorTaula].push(grup);
 
-                ocupacio[millorTaula] += grup.mida;
+                ocupacio[melhorTaula] += grup.mida;
             }
 
 
@@ -506,8 +535,9 @@
         }
 
 
-        // Petites funcions per evitar problemes
-        // de noms i mantenir el codi clar.
+        // =====================================================
+        // FUNCIONS AUXILIARS
+        // =====================================================
 
         function resultadoSeguro(valor) {
             return valor;
@@ -541,7 +571,6 @@
 
 
             const colors = {};
-
 
             let numeroColor = 0;
 
@@ -607,11 +636,8 @@
 
 
                 header.appendChild(nomTaula);
-
                 header.appendChild(ocupacioText);
-
                 header.appendChild(percentatge);
-
 
                 taula.appendChild(header);
 
@@ -660,7 +686,6 @@
 
 
             // Afegir resum
-
             crearResum(
                 taules,
                 ocupacio,
@@ -793,7 +818,7 @@
         // PROGRAMA PRINCIPAL
         // =====================================================
 
-        async function calcular() {
+        function calcular() {
 
             ocultarMissatge();
 
@@ -816,13 +841,16 @@
                     );
 
 
-                const fitxer =
+                // Agafar directament el text del textarea
+                const text =
                     document.getElementById(
-                        "fitxer"
-                    ).files[0];
+                        "grups"
+                    ).value;
 
 
-                // Validacions
+                // -----------------------------
+                // VALIDACIONS
+                // -----------------------------
 
                 if (
                     isNaN(numTaules)
@@ -848,19 +876,17 @@
                 }
 
 
-                if (!fitxer) {
+                if (!text.trim()) {
 
                     throw new Error(
-                        "Selecciona un fitxer .txt."
+                        "Escriu almenys un grup."
                     );
                 }
 
 
-                // Llegir fitxer
-
-                const text =
-                    await fitxer.text();
-
+                // -----------------------------
+                // LLEGIR GRUPS
+                // -----------------------------
 
                 const grups =
                     llegirGrups(text);
@@ -869,12 +895,14 @@
                 if (grups.length === 0) {
 
                     throw new Error(
-                        "El fitxer no conté cap grup."
+                        "No s'ha introduït cap grup."
                     );
                 }
 
 
-                // Total persones
+                // -----------------------------
+                // TOTAL PERSONES
+                // -----------------------------
 
                 const totalPersones =
                     grups.reduce(
@@ -896,7 +924,9 @@
                 }
 
 
-                // Comprovar grups individuals
+                // -----------------------------
+                // COMPROVAR GRUPS INDIVIDUALS
+                // -----------------------------
 
                 for (const grup of grups) {
 
@@ -912,7 +942,9 @@
                 }
 
 
-                // Repartir
+                // -----------------------------
+                // REPARTIR
+                // -----------------------------
 
                 const resultat =
                     repartirGrups(
@@ -922,7 +954,9 @@
                     );
 
 
-                // Dibuixar
+                // -----------------------------
+                // DIBUIXAR
+                // -----------------------------
 
                 dibuixarTaules(
                     resultat.taules,
