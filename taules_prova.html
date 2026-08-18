@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Distribució automàtica de taules</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            max-width: 900px;
+            margin: 0 auto 30px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="number"],
+        input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 7px;
+            background: #333;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        #missatge {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .error {
+            background: #ffd6d6;
+            color: #900;
+        }
+
+        .info {
+            background: #d6e8ff;
+            color: #174a80;
+        }
+
+        #resultat {
+            margin-top: 30px;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .taules {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 15px;
+            min-width: max-content;
+        }
+
+        .taula {
+            width: 180px;
+            min-height: 500px;
+            background: #f2f2f2;
+            border: 2px solid #222;
+            border-radius: 8px;
+            padding: 10px;
+            position: relative;
+        }
+
+        .taula-header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .taula-nom {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .ocupacio {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .percentatge {
+            font-size: 13px;
+            color: #777;
+            margin-top: 3px;
+        }
+
+        .grup {
+            width: 100%;
+            min-height: 35px;
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .resum {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .resum h2 {
+            margin-top: 0;
+        }
+
+        .resum-taula {
+            margin-bottom: 20px;
+        }
+
+        .resum-grup {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 15px;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .taula {
+                width: 160px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Distribució automàtica de taules</h1>
+
+    <div class="controls">
+
+        <div class="controls-grid">
+
+            <div class="campo">
+                <label for="numTaules">
+                    Número de taules
+                </label>
+
+                <input
+                    type="number"
+                    id="numTaules"
+                    min="1"
+                    value="10"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="capacitat">
+                    Capacitat màxima per taula
+                </label>
+
+                <input
+                    type="number"
+                    id="capacitat"
+                    min="1"
+                    value="10"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="fitxer">
+                    Fitxer de grups (.txt)
+                </label>
+
+                <input
+                    type="file"
+                    id="fitxer"
+                    accept=".txt"
+                >
+            </div>
+
+        </div>
+
+        <button onclick="calcular()">
+            Distribuir grups
+        </button>
+
+    </div>
+
+
+    <div id="missatge"></div>
+
+
+    <div id="resultat"></div>
+
+
+    <script>
+
+        // =====================================================
+        // COLORS
+        // =====================================================
+
+        const colorsDisponibles = [
+            "#FFD6D6",
+            "#D6E8FF",
+            "#D6F5D6",
+            "#FFF0C2",
+            "#E8D6FF",
+            "#FFDCC2",
+            "#D6F5F5",
+            "#F5D6E8",
+            "#E8E8E8",
+            "#FFF5D6",
+
+            "#FFCCCC",
+            "#CCE0FF",
+            "#CCFFCC",
+            "#FFFFCC",
+            "#E0CCFF",
+            "#FFD9B3",
+            "#CCFFFF",
+            "#FFCCE6",
+            "#D9D9D9",
+            "#FFE6CC",
+
+            "#F4CCCC",
+            "#CFE2F3",
+            "#D9EAD3",
+            "#FFF2CC",
+            "#D9D2E9",
+            "#FCE5CD",
+            "#D0E0E3",
+            "#EAD1DC",
+            "#EFEFEF",
+            "#F9CB9C",
+
+            "#EA9999",
+            "#9FC5E8",
+            "#A9D18E",
+            "#FFD966",
+            "#B4A7D6",
+            "#F6B26B",
+            "#76D7C4",
+            "#D5A6BD",
+            "#B7B7B7",
+            "#F4B183"
+        ];
+
+
+        // =====================================================
+        // LLEGIR FITXER
+        // =====================================================
+
+        function llegirGrups(text) {
+
+            const grups = [];
+
+            const linies = text.split(/\r?\n/);
+
+            for (let linia of linies) {
+
+                linia = linia.trim();
+
+                if (!linia) {
+                    continue;
+                }
+
+                const parts = linia.split(/\s+/);
+
+                const mida = parseInt(parts[parts.length - 1]);
+
+                if (isNaN(mida)) {
+                    throw new Error(
+                        `Format incorrecte a la línia: "${linia}"`
+                    );
+                }
+
+                const nom = parts
+                    .slice(0, -1)
+                    .join(" ");
+
+                grups.push({
+                    nom: nom,
+                    mida: mida
+                });
+            }
+
+            return grups;
+        }
+
+
+        // =====================================================
+        // ORDRE CENTRAL
+        // =====================================================
+
+        function ordreCentral(numTaules) {
+
+            const centre = (numTaules - 1) / 2;
+
+            const ordre = [];
+
+            for (let i = 0; i < numTaules; i++) {
+                ordre.push(i);
+            }
+
+            ordre.sort((a, b) => {
+
+                return Math.abs(a - centre)
+                     - Math.abs(b - centre);
+
+            });
+
+            return ordre;
+        }
+
+
+        // =====================================================
+        // REPARTIMENT
+        // =====================================================
+
+        function repartirGrups(
+            grups,
+            numTaules,
+            capacitat
+        ) {
+
+            // Ordenar de grup més gran a més petit
+
+            grups = [...grups].sort(
+                (a, b) => b.mida - a.mida
+            );
+
+
+            const taules = [];
+
+            const ocupacio = [];
+
+            for (let i = 0; i < numTaules; i++) {
+
+                taules.push([]);
+
+                ocupacio.push(0);
+            }
+
+
+            const ordre = ordreCentral(numTaules);
+
+
+            // Repartir grups
+
+            for (const grup of grups) {
+
+                let millorTaula = null;
+
+                let millorResultat = null;
+
+
+                for (const t of ordre) {
+
+                    if (
+                        ocupacio[t] + grup.mida
+                        <= capacitat
+                    ) {
+
+                        const novaOcupacio =
+                            ocupacio[t] + grup.mida;
+
+
+                        const resultat =
+                            novaOcupacio;
+
+
+                        if (
+                            millorResultat === null
+                            ||
+                            resultat > millorResultat
+                        ) {
+
+                            millorResultat =
+                                resultadoSeguro(resultat);
+
+                            millorTaula = t;
+                        }
+                    }
+                }
+
+
+                if (melhorTaulaSeguro(millorTaula) === null) {
+
+                    throw new Error(
+                        `El grup "${grup.nom}" (${grup.mida}) ` +
+                        `no cap a cap taula.`
+                    );
+                }
+
+
+                taules[millorTaula].push(grup);
+
+                ocupacio[millorTaula] += grup.mida;
+            }
+
+
+            // =================================================
+            // REORDENAR LES TAULES
+            // MÉS PLENES AL CENTRE
+            // =================================================
+
+            const dades = [];
+
+            for (let i = 0; i < numTaules; i++) {
+
+                dades.push({
+                    taula: taules[i],
+                    ocup: ocupacio[i]
+                });
+            }
+
+
+            dades.sort(
+                (a, b) => b.ocup - a.ocup
+            );
+
+
+            const taulesNoves =
+                Array(numTaules);
+
+            const ocupacioNova =
+                Array(numTaules);
+
+
+            for (
+                let i = 0;
+                i < ordre.length;
+                i++
+            ) {
+
+                const posicio = ordre[i];
+
+                const dada = dades[i];
+
+                taulesNoves[posicio] =
+                    dada.taula;
+
+                ocupacioNova[posicio] =
+                    dada.ocup;
+            }
+
+
+            return {
+                taules: taulesNoves,
+                ocupacio: ocupacioNova
+            };
+        }
+
+
+        // Petites funcions per evitar problemes
+        // de noms i mantenir el codi clar.
+
+        function resultadoSeguro(valor) {
+            return valor;
+        }
+
+        function melhorTaulaSeguro(valor) {
+            return valor;
+        }
+
+
+        // =====================================================
+        // DIBUIXAR TAULES
+        // =====================================================
+
+        function dibuixarTaules(
+            taules,
+            ocupacio,
+            capacitat
+        ) {
+
+            const resultat =
+                document.getElementById("resultat");
+
+            resultat.innerHTML = "";
+
+
+            const contenidor =
+                document.createElement("div");
+
+            contenidor.className = "taules";
+
+
+            const colors = {};
+
+
+            let numeroColor = 0;
+
+
+            for (
+                let i = 0;
+                i < taules.length;
+                i++
+            ) {
+
+                const taula =
+                    document.createElement("div");
+
+                taula.className = "taula";
+
+
+                // -----------------------------
+                // CAPÇALERA
+                // -----------------------------
+
+                const header =
+                    document.createElement("div");
+
+                header.className =
+                    "taula-header";
+
+
+                const nomTaula =
+                    document.createElement("div");
+
+                nomTaula.className =
+                    "taula-nom";
+
+                nomTaula.textContent =
+                    `TAULA ${i + 1}`;
+
+
+                const ocupacioText =
+                    document.createElement("div");
+
+                ocupacioText.className =
+                    "ocupacio";
+
+                ocupacioText.textContent =
+                    `${ocupacio[i]}/${capacitat}`;
+
+
+                const percentatge =
+                    document.createElement("div");
+
+                percentatge.className =
+                    "percentatge";
+
+
+                const percent =
+                    ocupacio[i] /
+                    capacitat *
+                    100;
+
+
+                percentatge.textContent =
+                    `${Math.round(percent)}%`;
+
+
+                header.appendChild(nomTaula);
+
+                header.appendChild(ocupacioText);
+
+                header.appendChild(percentatge);
+
+
+                taula.appendChild(header);
+
+
+                // -----------------------------
+                // GRUPS
+                // -----------------------------
+
+                for (const grup of taules[i]) {
+
+                    if (!colors[grup.nom]) {
+
+                        colors[grup.nom] =
+                            colorsDisponibles[
+                                numeroColor %
+                                colorsDisponibles.length
+                            ];
+
+                        numeroColor++;
+                    }
+
+
+                    const bloc =
+                        document.createElement("div");
+
+                    bloc.className = "grup";
+
+
+                    bloc.style.backgroundColor =
+                        colors[grup.nom];
+
+
+                    bloc.textContent =
+                        `${grup.nom} (${grup.mida})`;
+
+
+                    taula.appendChild(bloc);
+                }
+
+
+                contenidor.appendChild(taula);
+            }
+
+
+            resultat.appendChild(contenidor);
+
+
+            // Afegir resum
+
+            crearResum(
+                taules,
+                ocupacio,
+                capacitat
+            );
+        }
+
+
+        // =====================================================
+        // RESUM
+        // =====================================================
+
+        function crearResum(
+            taules,
+            ocupacio,
+            capacitat
+        ) {
+
+            const resultat =
+                document.getElementById("resultat");
+
+
+            const resum =
+                document.createElement("div");
+
+            resum.className = "resum";
+
+
+            const titol =
+                document.createElement("h2");
+
+            titol.textContent =
+                "Resultat";
+
+
+            resum.appendChild(titol);
+
+
+            for (
+                let i = 0;
+                i < taules.length;
+                i++
+            ) {
+
+                const taula =
+                    document.createElement("div");
+
+                taula.className =
+                    "resum-taula";
+
+
+                const percent =
+                    Math.round(
+                        ocupacio[i] /
+                        capacitat *
+                        100
+                    );
+
+
+                const titolTaula =
+                    document.createElement("strong");
+
+
+                titolTaula.textContent =
+                    `Taula ${i + 1} — ` +
+                    `${ocupacio[i]}/${capacitat} ` +
+                    `(${percent}%)`;
+
+
+                taula.appendChild(titolTaula);
+
+
+                for (const grup of taules[i]) {
+
+                    const grupElement =
+                        document.createElement("div");
+
+                    grupElement.className =
+                        "resum-grup";
+
+
+                    grupElement.textContent =
+                        `- ${grup.nom}: ` +
+                        `${grup.mida}`;
+
+
+                    taula.appendChild(grupElement);
+                }
+
+
+                resum.appendChild(taula);
+            }
+
+
+            resultat.appendChild(resum);
+        }
+
+
+        // =====================================================
+        // MOSTRAR MISSATGES
+        // =====================================================
+
+        function mostrarMissatge(
+            text,
+            tipus
+        ) {
+
+            const element =
+                document.getElementById("missatge");
+
+
+            element.textContent = text;
+
+            element.className = tipus;
+
+            element.style.display = "block";
+        }
+
+
+        function ocultarMissatge() {
+
+            const element =
+                document.getElementById("missatge");
+
+            element.style.display = "none";
+        }
+
+
+        // =====================================================
+        // PROGRAMA PRINCIPAL
+        // =====================================================
+
+        async function calcular() {
+
+            ocultarMissatge();
+
+
+            try {
+
+                const numTaules =
+                    parseInt(
+                        document.getElementById(
+                            "numTaules"
+                        ).value
+                    );
+
+
+                const capacitat =
+                    parseInt(
+                        document.getElementById(
+                            "capacitat"
+                        ).value
+                    );
+
+
+                const fitxer =
+                    document.getElementById(
+                        "fitxer"
+                    ).files[0];
+
+
+                // Validacions
+
+                if (
+                    isNaN(numTaules)
+                    ||
+                    numTaules <= 0
+                ) {
+
+                    throw new Error(
+                        "El número de taules no és vàlid."
+                    );
+                }
+
+
+                if (
+                    isNaN(capacitat)
+                    ||
+                    capacitat <= 0
+                ) {
+
+                    throw new Error(
+                        "La capacitat no és vàlida."
+                    );
+                }
+
+
+                if (!fitxer) {
+
+                    throw new Error(
+                        "Selecciona un fitxer .txt."
+                    );
+                }
+
+
+                // Llegir fitxer
+
+                const text =
+                    await fitxer.text();
+
+
+                const grups =
+                    llegirGrups(text);
+
+
+                if (grups.length === 0) {
+
+                    throw new Error(
+                        "El fitxer no conté cap grup."
+                    );
+                }
+
+
+                // Total persones
+
+                const totalPersones =
+                    grups.reduce(
+                        (total, grup) =>
+                            total + grup.mida,
+                        0
+                    );
+
+
+                if (
+                    totalPersones >
+                    numTaules * capacitat
+                ) {
+
+                    throw new Error(
+                        "No hi ha prou cadires " +
+                        "per tothom."
+                    );
+                }
+
+
+                // Comprovar grups individuals
+
+                for (const grup of grups) {
+
+                    if (grup.mida > capacitat) {
+
+                        throw new Error(
+                            `El grup "${grup.nom}" ` +
+                            `té ${grup.mida} persones ` +
+                            `i no cap en una taula ` +
+                            `de ${capacitat}.`
+                        );
+                    }
+                }
+
+
+                // Repartir
+
+                const resultat =
+                    repartirGrups(
+                        grups,
+                        numTaules,
+                        capacitat
+                    );
+
+
+                // Dibuixar
+
+                dibuixarTaules(
+                    resultat.taules,
+                    resultat.ocupacio,
+                    capacitat
+                );
+
+
+                mostrarMissatge(
+                    `Total persones: ${totalPersones}`,
+                    "info"
+                );
+
+            } catch (error) {
+
+                mostrarMissatge(
+                    error.message,
+                    "error"
+                );
+
+                document.getElementById(
+                    "resultat"
+                ).innerHTML = "";
+            }
+        }
+
+    </script>
+
+</body>
+</html>
