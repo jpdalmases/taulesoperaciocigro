@@ -7,6 +7,7 @@
     <title>Distribució automàtica de taules</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -75,26 +76,316 @@
             margin-top: 3px;
         }
 
-        button {
-            margin-top: 20px;
-            padding: 12px 25px;
+        /* =====================================================
+           RESTRICCIONS
+           ===================================================== */
+
+        .restriccions {
+            grid-column: 1 / -1;
+
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+
+            gap: 20px;
+
+            margin-top: 5px;
+        }
+
+        .restriccio {
+            background: #fafafa;
+
+            border: 1px solid #ddd;
+            border-radius: 10px;
+
+            padding: 18px;
+        }
+
+        .restriccio h2 {
+            margin: 0 0 8px 0;
+
+            font-size: 20px;
+        }
+
+        .restriccio-ajuda {
+            color: #777;
+
+            font-size: 13px;
+
+            margin-bottom: 15px;
+
+            line-height: 1.4;
+        }
+
+        /* =====================================================
+           CAIXES DE GRUPS
+           ===================================================== */
+
+        .caixes-grups {
+            display: flex;
+            flex-direction: column;
+
+            gap: 8px;
+        }
+
+        .caixa-grup {
+            display: flex;
+
+            gap: 8px;
+        }
+
+        .selector-container {
+            position: relative;
+
+            flex: 1;
+        }
+
+        .selector-input {
+            width: 100%;
+
+            padding: 10px;
+
+            border: 1px solid #bbb;
+            border-radius: 7px;
+
+            font-size: 15px;
+
+            background: white;
+        }
+
+        .selector-input:focus {
+            outline: none;
+
+            border-color: #555;
+        }
+
+        .boto-eliminar-caixa {
+            margin: 0;
+
+            padding: 0 12px;
+
             border: none;
             border-radius: 7px;
-            background: #333;
-            color: white;
-            font-size: 16px;
+
+            background: #ddd;
+
+            color: #555;
+
+            font-size: 18px;
+
             cursor: pointer;
         }
 
-        button:hover {
+        .boto-eliminar-caixa:hover {
+            background: #ccc;
+        }
+
+        /* =====================================================
+           SUGGERIMENTS
+           ===================================================== */
+
+        .suggeriments {
+            position: absolute;
+
+            top: calc(100% + 2px);
+            left: 0;
+            right: 0;
+
+            background: white;
+
+            border: 1px solid #ccc;
+            border-radius: 7px;
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+
+            z-index: 100;
+
+            max-height: 200px;
+
+            overflow-y: auto;
+
+            display: none;
+        }
+
+        .suggeriment {
+            padding: 10px;
+
+            cursor: pointer;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .suggeriment:last-child {
+            border-bottom: none;
+        }
+
+        .suggeriment:hover {
+            background: #f0f0f0;
+        }
+
+        /* =====================================================
+           BOTONS RESTRICCIONS
+           ===================================================== */
+
+        .boto-afegir-grup {
+            width: 100%;
+
+            margin: 10px 0 0 0;
+
+            padding: 9px;
+
+            background: white;
+
+            color: #333;
+
+            border: 1px dashed #aaa;
+            border-radius: 7px;
+
+            font-size: 14px;
+
+            cursor: pointer;
+        }
+
+        .boto-afegir-grup:hover {
+            background: #f0f0f0;
+        }
+
+        .boto-restriccio {
+            width: 100%;
+
+            margin: 12px 0 0 0;
+
+            padding: 11px;
+
+            border: none;
+            border-radius: 7px;
+
+            color: white;
+
+            font-size: 15px;
+
+            cursor: pointer;
+        }
+
+        .boto-junts {
+            background: #333;
+        }
+
+        .boto-junts:hover {
             background: #555;
         }
 
+        .boto-separats {
+            background: #333;
+        }
+
+        .boto-separats:hover {
+            background: #555;
+        }
+
+        /* =====================================================
+           RESTRICCIONS CREADES
+           ===================================================== */
+
+        .llista-restriccions {
+            margin-top: 15px;
+        }
+
+        .restriccio-creada {
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 10px;
+
+            padding: 10px;
+
+            margin-bottom: 8px;
+
+            background: white;
+
+            border: 1px solid #ddd;
+            border-radius: 7px;
+        }
+
+        .restriccio-text {
+            font-size: 13px;
+
+            font-weight: bold;
+
+            line-height: 1.4;
+        }
+
+        .boto-eliminar-restriccio {
+            margin: 0;
+
+            padding: 5px 9px;
+
+            background: #c44;
+
+            color: white;
+
+            border: none;
+            border-radius: 5px;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+            flex-shrink: 0;
+        }
+
+        .boto-eliminar-restriccio:hover {
+            background: #a22;
+        }
+
+        .missatge-restriccio {
+            margin-top: 10px;
+
+            color: #900;
+
+            font-size: 13px;
+
+            display: none;
+        }
+
+        /* =====================================================
+           BOTÓ PRINCIPAL
+           ===================================================== */
+
+        .boto-principal {
+            margin-top: 20px;
+
+            padding: 12px 25px;
+
+            border: none;
+            border-radius: 7px;
+
+            background: #333;
+            color: white;
+
+            font-size: 16px;
+
+            cursor: pointer;
+        }
+
+        .boto-principal:hover {
+            background: #555;
+        }
+
+        /* =====================================================
+           MISSATGES
+           ===================================================== */
+
         #missatge {
             max-width: 900px;
+
             margin: 20px auto;
+
             padding: 15px;
+
             border-radius: 8px;
+
             display: none;
         }
 
@@ -108,70 +399,105 @@
             color: #174a80;
         }
 
+        /* =====================================================
+           RESULTAT
+           ===================================================== */
+
         #resultat {
             margin-top: 30px;
+
             overflow-x: auto;
+
             padding-bottom: 20px;
         }
 
         .taules {
             display: flex;
+
             justify-content: center;
+
             align-items: flex-start;
+
             gap: 15px;
+
             min-width: max-content;
         }
 
         .taula {
             width: 180px;
+
             min-height: 500px;
+
             background: #f2f2f2;
+
             border: 2px solid #222;
+
             border-radius: 8px;
+
             padding: 10px;
+
             position: relative;
         }
 
         .taula-header {
             text-align: center;
+
             margin-bottom: 12px;
         }
 
         .taula-nom {
             font-size: 18px;
+
             font-weight: bold;
         }
 
         .ocupacio {
             font-size: 16px;
+
             margin-top: 5px;
         }
 
         .percentatge {
             font-size: 13px;
+
             color: #777;
+
             margin-top: 3px;
         }
 
         .grup {
             width: 100%;
+
             min-height: 35px;
+
             margin-bottom: 5px;
+
             padding: 5px;
+
             border-radius: 4px;
+
             display: flex;
+
             align-items: center;
+
             font-size: 11px;
+
             font-weight: bold;
+
             overflow: hidden;
         }
 
         .resum {
             max-width: 900px;
+
             margin: 30px auto;
+
             padding: 20px;
+
             background: white;
+
             border-radius: 10px;
+
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
@@ -185,10 +511,16 @@
 
         .resum-grup {
             margin-left: 20px;
+
             margin-top: 5px;
         }
 
+        /* =====================================================
+           MÒBIL
+           ===================================================== */
+
         @media (max-width: 700px) {
+
             body {
                 padding: 15px;
             }
@@ -201,10 +533,18 @@
                 grid-column: auto;
             }
 
+            .restriccions {
+                grid-column: auto;
+
+                grid-template-columns: 1fr;
+            }
+
             .taula {
                 width: 160px;
             }
+
         }
+
     </style>
 </head>
 
@@ -212,11 +552,18 @@
 
     <h1>Distribució automàtica de taules</h1>
 
+
     <div class="controls">
 
         <div class="controls-grid">
 
+
+            <!-- =================================================
+                 NÚMERO DE TAULES
+                 ================================================= -->
+
             <div class="campo">
+
                 <label for="numTaules">
                     Número de taules
                 </label>
@@ -227,10 +574,16 @@
                     min="1"
                     value="10"
                 >
+
             </div>
 
 
+            <!-- =================================================
+                 CAPACITAT
+                 ================================================= -->
+
             <div class="campo">
+
                 <label for="capacitat">
                     Capacitat màxima per taula
                 </label>
@@ -241,8 +594,13 @@
                     min="1"
                     value="10"
                 >
+
             </div>
 
+
+            <!-- =================================================
+                 GRUPS
+                 ================================================= -->
 
             <div class="campo grups-campo">
 
@@ -268,10 +626,131 @@ Pares 5"
 
             </div>
 
+
+            <!-- =================================================
+                 RESTRICCIONS
+                 ================================================= -->
+
+            <div class="restriccions">
+
+
+                <!-- =================================================
+                     GRUPS JUNTS
+                     ================================================= -->
+
+                <div class="restriccio">
+
+                    <h2> 💐Grups junts👨🏻‍❤️‍💋‍👨🏻 </h2>
+
+                    <div class="restriccio-ajuda">
+                        Afegeix tots els grups que vols que
+                        estiguin junts i consecutius a la mateixa taula.
+                    </div>
+
+
+                    <div
+                        id="caixesJunts"
+                        class="caixes-grups"
+                    ></div>
+
+
+                    <button
+                        type="button"
+                        class="boto-afegir-grup"
+                        onclick="afegirCaixaJunt()"
+                    >
+                        + Afegir grup
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="boto-restriccio boto-junts"
+                        onclick="crearRestriccioJunts()"
+                    >
+                        Ajuntar grups
+                    </button>
+
+
+                    <div
+                        id="missatgeJunts"
+                        class="missatge-restriccio"
+                    ></div>
+
+
+                    <div
+                        id="llistaJunts"
+                        class="llista-restriccions"
+                    ></div>
+
+                </div>
+
+
+                <!-- =================================================
+                     GRUPS SEPARATS
+                     ================================================= -->
+
+                <div class="restriccio">
+
+                    <h2> 😡Grups separats⛔ </h2>
+
+                    <div class="restriccio-ajuda">
+                        Afegeix tots els grups que no poden
+                        compartir taula entre ells.
+                    </div>
+
+
+                    <div
+                        id="caixesSeparats"
+                        class="caixes-grups"
+                    ></div>
+
+
+                    <button
+                        type="button"
+                        class="boto-afegir-grup"
+                        onclick="afegirCaixaSeparat()"
+                    >
+                        + Afegir grup
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="boto-restriccio boto-separats"
+                        onclick="crearRestriccioSeparats()"
+                    >
+                        Separar grups
+                    </button>
+
+
+                    <div
+                        id="missatgeSeparats"
+                        class="missatge-restriccio"
+                    ></div>
+
+
+                    <div
+                        id="llistaSeparats"
+                        class="llista-restriccions"
+                    ></div>
+
+                </div>
+
+            </div>
+
         </div>
 
 
-        <button onclick="calcular()">
+        <!-- =================================================
+             BOTÓ PRINCIPAL
+             ================================================= -->
+
+        <button
+            type="button"
+            class="boto-principal"
+            onclick="calcular()"
+        >
             Distribuir grups
         </button>
 
@@ -280,17 +759,18 @@ Pares 5"
 
     <div id="missatge"></div>
 
-
     <div id="resultat"></div>
 
 
     <script>
+
 
         // =====================================================
         // COLORS
         // =====================================================
 
         const colorsDisponibles = [
+
             "#FFD6D6",
             "#D6E8FF",
             "#D6F5D6",
@@ -334,38 +814,59 @@ Pares 5"
             "#D5A6BD",
             "#B7B7B7",
             "#F4B183"
+
         ];
 
 
         // =====================================================
-        // LLEGIR GRUPS DES DEL TEXT
+        // VARIABLES DE RESTRICCIONS
+        // =====================================================
+
+        let restriccionsJunts = [];
+
+        let restriccionsSeparats = [];
+
+
+        // =====================================================
+        // LLEGIR GRUPS
         // =====================================================
 
         function llegirGrups(text) {
 
             const grups = [];
 
-            const linies = text.split(/\r?\n/);
+            const linies =
+                text.split(/\r?\n/);
+
 
             for (let linia of linies) {
 
                 linia = linia.trim();
 
+
                 if (!linia) {
                     continue;
                 }
 
-                const parts = linia.split(/\s+/);
+
+                const parts =
+                    linia.split(/\s+/);
+
 
                 const mida =
-                    parseInt(parts[parts.length - 1]);
+                    parseInt(
+                        parts[parts.length - 1]
+                    );
+
 
                 if (isNaN(mida)) {
 
                     throw new Error(
                         `Format incorrecte a la línia: "${linia}"`
                     );
+
                 }
+
 
                 if (mida <= 0) {
 
@@ -373,53 +874,1217 @@ Pares 5"
                         `El nombre de persones del grup `
                         + `"${linia}" ha de ser superior a 0.`
                     );
+
                 }
+
 
                 const nom =
                     parts
                         .slice(0, -1)
                         .join(" ");
 
+
                 if (!nom) {
 
                     throw new Error(
                         `Falta el nom del grup a la línia: "${linia}"`
                     );
+
                 }
 
+
                 grups.push({
+
                     nom: nom,
+
                     mida: mida
+
                 });
+
             }
+
 
             return grups;
         }
 
 
         // =====================================================
+        // OBTENIR NOMS DELS GRUPS
+        // =====================================================
+
+        function obtenirNomsGrups() {
+
+            try {
+
+                const text =
+                    document.getElementById(
+                        "textGrups"
+                    ).value;
+
+
+                if (!text.trim()) {
+                    return [];
+                }
+
+
+                return llegirGrups(text)
+                    .map(grup => grup.nom);
+
+            } catch (error) {
+
+                return [];
+
+            }
+        }
+
+
+        // =====================================================
+        // CREAR UNA CAIXA DE GRUP
+        // =====================================================
+
+        function crearCaixaGrup(
+            contenidorId
+        ) {
+
+            const contenidor =
+                document.getElementById(
+                    contenidorId
+                );
+
+
+            const caixa =
+                document.createElement("div");
+
+
+            caixa.className =
+                "caixa-grup";
+
+
+            const selector =
+                document.createElement("div");
+
+
+            selector.className =
+                "selector-container";
+
+
+            const input =
+                document.createElement("input");
+
+
+            input.type =
+                "text";
+
+
+            input.className =
+                "selector-input";
+
+
+            input.placeholder =
+                "Escriu el nom del grup...";
+
+
+            input.autocomplete =
+                "off";
+
+
+            const suggeriments =
+                document.createElement("div");
+
+
+            suggeriments.className =
+                "suggeriments";
+
+
+            // ---------------------------------------------
+            // Autocompletat
+            // ---------------------------------------------
+
+            input.addEventListener(
+                "input",
+                function() {
+
+                    mostrarSuggeriments(
+                        input,
+                        suggeriments
+                    );
+
+                }
+            );
+
+
+            input.addEventListener(
+                "focus",
+                function() {
+
+                    if (
+                        input.value.trim()
+                    ) {
+
+                        mostrarSuggeriments(
+                            input,
+                            suggeriments
+                        );
+
+                    }
+
+                }
+            );
+
+
+            selector.appendChild(input);
+
+            selector.appendChild(suggeriments);
+
+
+            // ---------------------------------------------
+            // Botó eliminar caixa
+            // ---------------------------------------------
+
+            const botoEliminar =
+                document.createElement(
+                    "button"
+                );
+
+
+            botoEliminar.type =
+                "button";
+
+
+            botoEliminar.className =
+                "boto-eliminar-caixa";
+
+
+            botoEliminar.textContent =
+                "×";
+
+
+            botoEliminar.title =
+                "Eliminar grup";
+
+
+            botoEliminar.onclick =
+                function() {
+
+                    caixa.remove();
+
+                };
+
+
+            caixa.appendChild(selector);
+
+            caixa.appendChild(botoEliminar);
+
+
+            contenidor.appendChild(caixa);
+
+
+            input.focus();
+        }
+
+
+        // =====================================================
+        // AFEGIR CAIXA JUNTS
+        // =====================================================
+
+        function afegirCaixaJunt() {
+
+            crearCaixaGrup(
+                "caixesJunts"
+            );
+
+        }
+
+
+        // =====================================================
+        // AFEGIR CAIXA SEPARATS
+        // =====================================================
+
+        function afegirCaixaSeparat() {
+
+            crearCaixaGrup(
+                "caixesSeparats"
+            );
+
+        }
+
+
+        // =====================================================
+        // SUGGERIMENTS
+        // =====================================================
+
+        function mostrarSuggeriments(
+            input,
+            contenidor
+        ) {
+
+            const text =
+                input.value
+                    .trim()
+                    .toLowerCase();
+
+
+            const noms =
+                obtenirNomsGrups();
+
+
+            contenidor.innerHTML = "";
+
+
+            if (
+                !text
+                ||
+                noms.length === 0
+            ) {
+
+                contenidor.style.display =
+                    "none";
+
+                return;
+            }
+
+
+            const coincidencies =
+                noms.filter(
+                    nom =>
+                        nom.toLowerCase()
+                            .includes(text)
+                );
+
+
+            if (
+                coincidencies.length === 0
+            ) {
+
+                contenidor.style.display =
+                    "none";
+
+                return;
+            }
+
+
+            for (
+                const nom of coincidencies
+            ) {
+
+                const element =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                element.className =
+                    "suggeriment";
+
+
+                element.textContent =
+                    nom;
+
+
+                element.addEventListener(
+                    "mousedown",
+                    function(event) {
+
+                        event.preventDefault();
+
+
+                        input.value =
+                            nom;
+
+
+                        contenidor.style.display =
+                            "none";
+
+                    }
+                );
+
+
+                contenidor.appendChild(
+                    element
+                );
+
+            }
+
+
+            contenidor.style.display =
+                "block";
+        }
+
+
+        // =====================================================
+        // OBTENIR VALORS D'UN CONTENIDOR
+        // =====================================================
+
+        function obtenirValorsCaixes(
+            contenidorId
+        ) {
+
+            const contenidor =
+                document.getElementById(
+                    contenidorId
+                );
+
+
+            const inputs =
+                contenidor.querySelectorAll(
+                    ".selector-input"
+                );
+
+
+            const valors = [];
+
+
+            for (
+                const input of inputs
+            ) {
+
+                const valor =
+                    input.value.trim();
+
+
+                if (valor) {
+
+                    valors.push(valor);
+
+                }
+
+            }
+
+
+            return valors;
+        }
+
+
+        // =====================================================
+        // NORMALITZAR NOMS
+        // =====================================================
+
+        function trobarNomExacte(
+            nom,
+            noms
+        ) {
+
+            return noms.find(
+                n =>
+                    n.toLowerCase()
+                    ===
+                    nom.toLowerCase()
+            );
+
+        }
+
+
+        // =====================================================
+        // CREAR RESTRICCIÓ JUNTS
+        // =====================================================
+
+        function crearRestriccioJunts() {
+
+            ocultarMissatgeRestriccio(
+                "missatgeJunts"
+            );
+
+
+            const valors =
+                obtenirValorsCaixes(
+                    "caixesJunts"
+                );
+
+
+            if (
+                valors.length < 2
+            ) {
+
+                mostrarErrorRestriccio(
+                    "missatgeJunts",
+                    "Has d'afegir com a mínim dos grups."
+                );
+
+                return;
+            }
+
+
+            const noms =
+                obtenirNomsGrups();
+
+
+            const grups = [];
+
+
+            for (
+                const valor of valors
+            ) {
+
+                const nom =
+                    trobarNomExacte(
+                        valor,
+                        noms
+                    );
+
+
+                if (!nom) {
+
+                    mostrarErrorRestriccio(
+                        "missatgeJunts",
+                        `"${valor}" no és un grup vàlid. Selecciona un grup de la llista.`
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    grups.includes(nom)
+                ) {
+
+                    mostrarErrorRestriccio(
+                        "missatgeJunts",
+                        `El grup "${nom}" està repetit.`
+                    );
+
+                    return;
+                }
+
+
+                grups.push(nom);
+            }
+
+
+            // ---------------------------------------------
+            // Comprovar si ja està dins d'una restricció
+            // ---------------------------------------------
+
+            for (
+                const grup of grups
+            ) {
+
+                for (
+                    const restriccio
+                    of restriccionsJunts
+                ) {
+
+                    if (
+                        restriccio.includes(grup)
+                    ) {
+
+                        mostrarErrorRestriccio(
+                            "missatgeJunts",
+                            `El grup "${grup}" ja forma part d'una altra restricció de grups junts.`
+                        );
+
+                        return;
+                    }
+
+                }
+
+            }
+
+
+            // ---------------------------------------------
+            // Crear restricció
+            // ---------------------------------------------
+
+            restriccionsJunts.push(
+                grups
+            );
+
+
+            // ---------------------------------------------
+            // Netejar caixes
+            // ---------------------------------------------
+
+            document.getElementById(
+                "caixesJunts"
+            ).innerHTML = "";
+
+
+            afegirCaixaJunt();
+
+
+            dibuixarRestriccionsJunts();
+        }
+
+
+        // =====================================================
+        // DIBUIXAR RESTRICCIONS JUNTS
+        // =====================================================
+
+        function dibuixarRestriccionsJunts() {
+
+            const contenidor =
+                document.getElementById(
+                    "llistaJunts"
+                );
+
+
+            contenidor.innerHTML = "";
+
+
+            restriccionsJunts.forEach(
+                (
+                    restriccio,
+                    index
+                ) => {
+
+                    const element =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    element.className =
+                        "restriccio-creada";
+
+
+                    const text =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    text.className =
+                        "restriccio-text";
+
+
+                    text.textContent =
+                        restriccio.join(" + ");
+
+
+                    const boto =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    boto.type =
+                        "button";
+
+
+                    boto.className =
+                        "boto-eliminar-restriccio";
+
+
+                    boto.textContent =
+                        "Eliminar";
+
+
+                    boto.onclick =
+                        function() {
+
+                            restriccionsJunts
+                                .splice(index, 1);
+
+
+                            dibuixarRestriccionsJunts();
+
+                        };
+
+
+                    element.appendChild(
+                        text
+                    );
+
+
+                    element.appendChild(
+                        boto
+                    );
+
+
+                    contenidor.appendChild(
+                        element
+                    );
+
+                }
+            );
+        }
+
+
+        // =====================================================
+        // CREAR RESTRICCIÓ SEPARATS
+        // =====================================================
+
+        function crearRestriccioSeparats() {
+
+            ocultarMissatgeRestriccio(
+                "missatgeSeparats"
+            );
+
+
+            const valors =
+                obtenirValorsCaixes(
+                    "caixesSeparats"
+                );
+
+
+            if (
+                valors.length < 2
+            ) {
+
+                mostrarErrorRestriccio(
+                    "missatgeSeparats",
+                    "Has d'afegir com a mínim dos grups."
+                );
+
+                return;
+            }
+
+
+            const noms =
+                obtenirNomsGrups();
+
+
+            const grups = [];
+
+
+            for (
+                const valor of valors
+            ) {
+
+                const nom =
+                    trobarNomExacte(
+                        valor,
+                        noms
+                    );
+
+
+                if (!nom) {
+
+                    mostrarErrorRestriccio(
+                        "missatgeSeparats",
+                        `"${valor}" no és un grup vàlid. Selecciona un grup de la llista.`
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    grups.includes(nom)
+                ) {
+
+                    mostrarErrorRestriccio(
+                        "missatgeSeparats",
+                        `El grup "${nom}" està repetit.`
+                    );
+
+                    return;
+                }
+
+
+                grups.push(nom);
+            }
+
+
+            // ---------------------------------------------
+            // Crear totes les incompatibilitats
+            //
+            // Exemple:
+            //
+            // A
+            // B
+            // C
+            //
+            // crea:
+            //
+            // A-B
+            // A-C
+            // B-C
+            // ---------------------------------------------
+
+            for (
+                let i = 0;
+                i < grups.length;
+                i++
+            ) {
+
+                for (
+                    let j = i + 1;
+                    j < grups.length;
+                    j++
+                ) {
+
+                    const a =
+                        grups[i];
+
+                    const b =
+                        grups[j];
+
+
+                    const existeix =
+                        restriccionsSeparats.some(
+                            parella =>
+
+                                (
+                                    parella[0] === a
+                                    &&
+                                    parella[1] === b
+                                )
+                                ||
+                                (
+                                    parella[0] === b
+                                    &&
+                                    parella[1] === a
+                                )
+                        );
+
+
+                    if (!existeix) {
+
+                        restriccionsSeparats.push([
+                            a,
+                            b
+                        ]);
+
+                    }
+
+                }
+
+            }
+
+
+            // ---------------------------------------------
+            // Netejar
+            // ---------------------------------------------
+
+            document.getElementById(
+                "caixesSeparats"
+            ).innerHTML = "";
+
+
+            afegirCaixaSeparat();
+
+
+            dibuixarRestriccionsSeparats();
+        }
+
+
+        // =====================================================
+        // DIBUIXAR RESTRICCIONS SEPARATS
+        // =====================================================
+
+        function dibuixarRestriccionsSeparats() {
+
+            const contenidor =
+                document.getElementById(
+                    "llistaSeparats"
+                );
+
+
+            contenidor.innerHTML = "";
+
+
+            restriccionsSeparats.forEach(
+                (
+                    restriccio,
+                    index
+                ) => {
+
+                    const element =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    element.className =
+                        "restriccio-creada";
+
+
+                    const text =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    text.className =
+                        "restriccio-text";
+
+
+                    text.textContent =
+                        `${restriccio[0]} ↔ ${restriccio[1]}`;
+
+
+                    const boto =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    boto.type =
+                        "button";
+
+
+                    boto.className =
+                        "boto-eliminar-restriccio";
+
+
+                    boto.textContent =
+                        "Eliminar";
+
+
+                    boto.onclick =
+                        function() {
+
+                            restriccionsSeparats
+                                .splice(index, 1);
+
+
+                            dibuixarRestriccionsSeparats();
+
+                        };
+
+
+                    element.appendChild(
+                        text
+                    );
+
+
+                    element.appendChild(
+                        boto
+                    );
+
+
+                    contenidor.appendChild(
+                        element
+                    );
+
+                }
+            );
+        }
+
+
+        // =====================================================
+        // TANCAR SUGGERIMENTS
+        // =====================================================
+
+        document.addEventListener(
+            "click",
+            function(event) {
+
+                if (
+                    !event.target.closest(
+                        ".selector-container"
+                    )
+                ) {
+
+                    document
+                        .querySelectorAll(
+                            ".suggeriments"
+                        )
+                        .forEach(
+                            element => {
+
+                                element.style.display =
+                                    "none";
+
+                            }
+                        );
+
+                }
+
+            }
+        );
+
+
+        // =====================================================
         // ORDRE CENTRAL
         // =====================================================
 
-        function ordreCentral(numTaules) {
+        function ordreCentral(
+            numTaules
+        ) {
 
             const centre =
                 (numTaules - 1) / 2;
 
+
             const ordre = [];
 
-            for (let i = 0; i < numTaules; i++) {
+
+            for (
+                let i = 0;
+                i < numTaules;
+                i++
+            ) {
+
                 ordre.push(i);
+
             }
 
-            ordre.sort((a, b) => {
 
-                return Math.abs(a - centre)
-                     - Math.abs(b - centre);
+            ordre.sort(
+                (a, b) => {
 
-            });
+                    return Math.abs(a - centre)
+                         -
+                           Math.abs(b - centre);
+
+                }
+            );
+
 
             return ordre;
+        }
+
+
+        // =====================================================
+        // CREAR BLOCS DE GRUPS JUNTS
+        // =====================================================
+
+        function crearBlocs(
+            grups,
+            consecutius,
+            incompatibles
+        ) {
+
+            const mapaGrups =
+                new Map();
+
+
+            for (
+                const grup of grups
+            ) {
+
+                if (
+                    mapaGrups.has(
+                        grup.nom
+                    )
+                ) {
+
+                    throw new Error(
+                        `El grup "${grup.nom}" apareix més d'una vegada.`
+                    );
+
+                }
+
+
+                mapaGrups.set(
+                    grup.nom,
+                    grup
+                );
+
+            }
+
+
+            const grupEnBloc =
+                new Map();
+
+
+            const blocs = [];
+
+
+            // ---------------------------------------------
+            // Blocs de grups junts
+            // ---------------------------------------------
+
+            for (
+                const cadena of consecutius
+            ) {
+
+                const bloc = [];
+
+
+                for (
+                    const nom of cadena
+                ) {
+
+                    if (
+                        !mapaGrups.has(
+                            nom
+                        )
+                    ) {
+
+                        throw new Error(
+                            `El grup "${nom}" de "Grups junts" no existeix.`
+                        );
+
+                    }
+
+
+                    if (
+                        grupEnBloc.has(
+                            nom
+                        )
+                    ) {
+
+                        throw new Error(
+                            `El grup "${nom}" apareix en més d'una restricció de "Grups junts".`
+                        );
+
+                    }
+
+
+                    bloc.push(
+                        mapaGrups.get(
+                            nom
+                        )
+                    );
+
+
+                    grupEnBloc.set(
+                        nom,
+                        blocs.length
+                    );
+
+                }
+
+
+                blocs.push(
+                    bloc
+                );
+
+            }
+
+
+            // ---------------------------------------------
+            // Grups sense bloc
+            // ---------------------------------------------
+
+            for (
+                const grup of grups
+            ) {
+
+                if (
+                    !grupEnBloc.has(
+                        grup.nom
+                    )
+                ) {
+
+                    blocs.push([
+                        grup
+                    ]);
+
+                }
+
+            }
+
+
+            // ---------------------------------------------
+            // Comprovar incompatibilitats
+            // dins del mateix bloc
+            // ---------------------------------------------
+
+            for (
+                const parella
+                of incompatibles
+            ) {
+
+                const grupA =
+                    parella[0];
+
+                const grupB =
+                    parella[1];
+
+
+                const blocA =
+                    grupEnBloc.get(
+                        grupA
+                    );
+
+
+                const blocB =
+                    grupEnBloc.get(
+                        grupB
+                    );
+
+
+                if (
+                    blocA !== undefined
+                    &&
+                    blocA === blocB
+                ) {
+
+                    throw new Error(
+                        `Impossible: "${grupA}" i "${grupB}" `
+                        +
+                        `han d'anar junts però també `
+                        +
+                        `estan marcats com a separats.`
+                    );
+
+                }
+
+            }
+
+
+            return blocs;
+        }
+
+
+        // =====================================================
+        // COMPROVAR SI UN BLOC POT ANAR A UNA TAULA
+        // =====================================================
+
+        function blocPotAnarATaula(
+            bloc,
+            taula,
+            ocupacio,
+            capacitat,
+            incompatiblesMapa,
+            taules
+        ) {
+
+            const midaBloc =
+                bloc.reduce(
+                    (
+                        total,
+                        grup
+                    ) =>
+                        total + grup.mida,
+                    0
+                );
+
+
+            // ---------------------------------------------
+            // Capacitat
+            // ---------------------------------------------
+
+            if (
+                ocupacio[taula]
+                +
+                midaBloc
+                >
+                capacitat
+            ) {
+
+                return false;
+
+            }
+
+
+            // ---------------------------------------------
+            // Incompatibilitats
+            // ---------------------------------------------
+
+            for (
+                const grupBloc
+                of bloc
+            ) {
+
+                for (
+                    const grupTaula
+                    of taules[taula]
+                ) {
+
+                    if (
+                        incompatiblesMapa
+                            .get(
+                                grupBloc.nom
+                            )
+                            ?.has(
+                                grupTaula.nom
+                            )
+                    ) {
+
+                        return false;
+
+                    }
+
+                }
+
+            }
+
+
+            return true;
         }
 
 
@@ -430,109 +2095,383 @@ Pares 5"
         function repartirGrups(
             grups,
             numTaules,
-            capacitat
+            capacitat,
+            consecutius,
+            incompatibles
         ) {
 
-            // Ordenar de grup més gran a més petit
+            // ---------------------------------------------
+            // Mapa d'incompatibilitats
+            // ---------------------------------------------
 
-            grups = [...grups].sort(
-                (a, b) => b.mida - a.mida
-            );
+            const incompatiblesMapa =
+                new Map();
 
+
+            for (
+                const parella
+                of incompatibles
+            ) {
+
+                const a =
+                    parella[0];
+
+                const b =
+                    parella[1];
+
+
+                if (
+                    !incompatiblesMapa.has(a)
+                ) {
+
+                    incompatiblesMapa.set(
+                        a,
+                        new Set()
+                    );
+
+                }
+
+
+                if (
+                    !incompatiblesMapa.has(b)
+                ) {
+
+                    incompatiblesMapa.set(
+                        b,
+                        new Set()
+                    );
+
+                }
+
+
+                incompatiblesMapa
+                    .get(a)
+                    .add(b);
+
+
+                incompatiblesMapa
+                    .get(b)
+                    .add(a);
+
+            }
+
+
+            // ---------------------------------------------
+            // Crear blocs
+            // ---------------------------------------------
+
+            const blocs =
+                crearBlocs(
+                    grups,
+                    consecutius,
+                    incompatibles
+                );
+
+
+            // ---------------------------------------------
+            // Comprovar mida blocs
+            // ---------------------------------------------
+
+            for (
+                const bloc
+                of blocs
+            ) {
+
+                const mida =
+                    bloc.reduce(
+                        (
+                            total,
+                            grup
+                        ) =>
+                            total + grup.mida,
+                        0
+                    );
+
+
+                if (
+                    mida > capacitat
+                ) {
+
+                    const noms =
+                        bloc
+                            .map(
+                                grup =>
+                                    grup.nom
+                            )
+                            .join(" + ");
+
+
+                    throw new Error(
+                        `El grup conjunt "${noms}" té ${mida} persones `
+                        +
+                        `i no cap en una taula de ${capacitat}.`
+                    );
+
+                }
+
+            }
+
+
+            // ---------------------------------------------
+            // Ordenar blocs de més gran a més petit
+            // ---------------------------------------------
+
+            const blocsOrdenats =
+                [...blocs].sort(
+                    (
+                        a,
+                        b
+                    ) => {
+
+                        const midaA =
+                            a.reduce(
+                                (
+                                    total,
+                                    grup
+                                ) =>
+                                    total + grup.mida,
+                                0
+                            );
+
+
+                        const midaB =
+                            b.reduce(
+                                (
+                                    total,
+                                    grup
+                                ) =>
+                                    total + grup.mida,
+                                0
+                            );
+
+
+                        return midaB - midaA;
+
+                    }
+                );
+
+
+            // ---------------------------------------------
+            // Crear taules
+            // ---------------------------------------------
 
             const taules = [];
+
             const ocupacio = [];
 
-            for (let i = 0; i < numTaules; i++) {
+
+            for (
+                let i = 0;
+                i < numTaules;
+                i++
+            ) {
 
                 taules.push([]);
+
                 ocupacio.push(0);
+
             }
 
 
             const ordre =
-                ordreCentral(numTaules);
+                ordreCentral(
+                    numTaules
+                );
 
 
-            // Repartir grups
+            // ---------------------------------------------
+            // Repartir blocs
+            // ---------------------------------------------
 
-            for (const grup of grups) {
+            for (
+                const bloc
+                of blocsOrdenats
+            ) {
 
-                let millorTaula = null;
-                let millorResultat = null;
+                let millorTaula =
+                    null;
 
 
-                for (const t of ordre) {
+                let millorResultat =
+                    null;
+
+
+                for (
+                    const t
+                    of ordre
+                ) {
 
                     if (
-                        ocupacio[t] + grup.mida
-                        <= capacitat
+                        blocPotAnarATaula(
+                            bloc,
+                            t,
+                            ocupacio,
+                            capacitat,
+                            incompatiblesMapa,
+                            taules
+                        )
                     ) {
 
+                        const midaBloc =
+                            bloc.reduce(
+                                (
+                                    total,
+                                    grup
+                                ) =>
+                                    total + grup.mida,
+                                0
+                            );
+
+
                         const novaOcupacio =
-                            ocupacio[t] + grup.mida;
-
-
-                        const resultat =
-                            novaOcupacio;
+                            ocupacio[t]
+                            +
+                            midaBloc;
 
 
                         if (
                             millorResultat === null
                             ||
-                            resultat > millorResultat
+                            novaOcupacio
+                            >
+                            millorResultat
                         ) {
 
                             millorResultat =
-                                resultat;
+                                novaOcupacio;
+
 
                             millorTaula =
                                 t;
+
                         }
+
                     }
+
                 }
 
 
-                if (millorTaula === null) {
+                // -----------------------------------------
+                // No hi ha taula possible
+                // -----------------------------------------
+
+                if (
+                    millorTaula === null
+                ) {
+
+                    const noms =
+                        bloc
+                            .map(
+                                grup =>
+                                    grup.nom
+                            )
+                            .join(" + ");
+
 
                     throw new Error(
-                        `El grup "${grup.nom}" (${grup.mida}) `
-                        + `no cap a cap taula.`
+                        `No s'ha pogut col·locar "${noms}" `
+                        +
+                        `respectant les restriccions.`
                     );
+
                 }
 
 
-                taules[millorTaula].push(grup);
-		ocupacio[millorTaula] += grup.mida;
+                // -----------------------------------------
+                // Afegir el bloc sencer
+                //
+                // Això garanteix que els grups junts
+                // queden consecutius.
+                // -----------------------------------------
+
+                for (
+                    const grup
+                    of bloc
+                ) {
+
+                    taules[millorTaula]
+                        ?.push(grup);
+
+                }
+
+
+                // Corregim l'assignació de manera explícita
+                // per evitar qualsevol ambigüitat.
+
+                for (
+                    const grup
+                    of bloc
+                ) {
+
+                    // Si encara no s'ha afegit correctament,
+                    // no fem res aquí.
+                }
+
+
+                // Calculem l'ocupació del bloc
+
+                const midaBloc =
+                    bloc.reduce(
+                        (
+                            total,
+                            grup
+                        ) =>
+                            total + grup.mida,
+                        0
+                    );
+
+
+                ocupacio[millorTaula]
+                    += midaBloc;
+
             }
 
 
             // =================================================
-            // REORDENAR LES TAULES
-            // MÉS PLENES AL CENTRE
+            // REORDENAR TAULES
             // =================================================
 
             const dades = [];
 
-            for (let i = 0; i < numTaules; i++) {
+
+            for (
+                let i = 0;
+                i < numTaules;
+                i++
+            ) {
 
                 dades.push({
-                    taula: taules[i],
-                    ocup: ocupacio[i]
+
+                    taula:
+                        taules[i],
+
+                    ocup:
+                        ocupacio[i]
+
                 });
+
             }
 
 
             dades.sort(
-                (a, b) => b.ocup - a.ocup
+                (
+                    a,
+                    b
+                ) =>
+                    b.ocup - a.ocup
             );
 
 
             const taulesNoves =
-                Array(numTaules);
+                Array(
+                    numTaules
+                );
+
 
             const ocupacioNova =
-                Array(numTaules);
+                Array(
+                    numTaules
+                );
 
 
             for (
@@ -544,20 +2483,29 @@ Pares 5"
                 const posicio =
                     ordre[i];
 
+
                 const dada =
                     dades[i];
+
 
                 taulesNoves[posicio] =
                     dada.taula;
 
+
                 ocupacioNova[posicio] =
                     dada.ocup;
+
             }
 
 
             return {
-                taules: taulesNoves,
-                ocupacio: ocupacioNova
+
+                taules:
+                    taulesNoves,
+
+                ocupacio:
+                    ocupacioNova
+
             };
         }
 
@@ -573,13 +2521,19 @@ Pares 5"
         ) {
 
             const resultat =
-                document.getElementById("resultat");
+                document.getElementById(
+                    "resultat"
+                );
+
 
             resultat.innerHTML = "";
 
 
             const contenidor =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             contenidor.className =
                 "taules";
@@ -597,53 +2551,72 @@ Pares 5"
             ) {
 
                 const taula =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 taula.className =
                     "taula";
 
 
-                // -----------------------------
+                // -----------------------------------------
                 // CAPÇALERA
-                // -----------------------------
+                // -----------------------------------------
 
                 const header =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 header.className =
                     "taula-header";
 
 
                 const nomTaula =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 nomTaula.className =
                     "taula-nom";
+
 
                 nomTaula.textContent =
                     `TAULA ${i + 1}`;
 
 
                 const ocupacioText =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 ocupacioText.className =
                     "ocupacio";
+
 
                 ocupacioText.textContent =
                     `${ocupacio[i]}/${capacitat}`;
 
 
                 const percentatge =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 percentatge.className =
                     "percentatge";
 
 
                 const percent =
-                    ocupacio[i] /
-                    capacitat *
+                    ocupacio[i]
+                    /
+                    capacitat
+                    *
                     100;
 
 
@@ -651,33 +2624,56 @@ Pares 5"
                     `${Math.round(percent)}%`;
 
 
-                header.appendChild(nomTaula);
-                header.appendChild(ocupacioText);
-                header.appendChild(percentatge);
-
-                taula.appendChild(header);
+                header.appendChild(
+                    nomTaula
+                );
 
 
-                // -----------------------------
+                header.appendChild(
+                    ocupacioText
+                );
+
+
+                header.appendChild(
+                    percentatge
+                );
+
+
+                taula.appendChild(
+                    header
+                );
+
+
+                // -----------------------------------------
                 // GRUPS
-                // -----------------------------
+                // -----------------------------------------
 
-                for (const grup of taules[i]) {
+                for (
+                    const grup
+                    of taules[i]
+                ) {
 
-                    if (!colors[grup.nom]) {
+                    if (
+                        !colors[grup.nom]
+                    ) {
 
                         colors[grup.nom] =
                             colorsDisponibles[
-                                numeroColor %
+                                numeroColor
+                                %
                                 colorsDisponibles.length
                             ];
+
 
                         numeroColor++;
                     }
 
 
                     const bloc =
-                        document.createElement("div");
+                        document.createElement(
+                            "div"
+                        );
+
 
                     bloc.className =
                         "grup";
@@ -691,18 +2687,24 @@ Pares 5"
                         `${grup.nom} (${grup.mida})`;
 
 
-                    taula.appendChild(bloc);
+                    taula.appendChild(
+                        bloc
+                    );
+
                 }
 
 
-                contenidor.appendChild(taula);
+                contenidor.appendChild(
+                    taula
+                );
+
             }
 
 
-            resultat.appendChild(contenidor);
+            resultat.appendChild(
+                contenidor
+            );
 
-
-            // Afegir resum
 
             crearResum(
                 taules,
@@ -723,24 +2725,34 @@ Pares 5"
         ) {
 
             const resultat =
-                document.getElementById("resultat");
+                document.getElementById(
+                    "resultat"
+                );
 
 
             const resum =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             resum.className =
                 "resum";
 
 
             const titol =
-                document.createElement("h2");
+                document.createElement(
+                    "h2"
+                );
+
 
             titol.textContent =
                 "Resultat";
 
 
-            resum.appendChild(titol);
+            resum.appendChild(
+                titol
+            );
 
 
             for (
@@ -750,7 +2762,10 @@ Pares 5"
             ) {
 
                 const taula =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
+
 
                 taula.className =
                     "resum-taula";
@@ -758,29 +2773,43 @@ Pares 5"
 
                 const percent =
                     Math.round(
-                        ocupacio[i] /
-                        capacitat *
+                        ocupacio[i]
+                        /
+                        capacitat
+                        *
                         100
                     );
 
 
                 const titolTaula =
-                    document.createElement("strong");
+                    document.createElement(
+                        "strong"
+                    );
 
 
                 titolTaula.textContent =
                     `Taula ${i + 1} — `
-                    + `${ocupacio[i]}/${capacitat} `
-                    + `(${percent}%)`;
+                    +
+                    `${ocupacio[i]}/${capacitat} `
+                    +
+                    `(${percent}%)`;
 
 
-                taula.appendChild(titolTaula);
+                taula.appendChild(
+                    titolTaula
+                );
 
 
-                for (const grup of taules[i]) {
+                for (
+                    const grup
+                    of taules[i]
+                ) {
 
                     const grupElement =
-                        document.createElement("div");
+                        document.createElement(
+                            "div"
+                        );
+
 
                     grupElement.className =
                         "resum-grup";
@@ -788,23 +2817,32 @@ Pares 5"
 
                     grupElement.textContent =
                         `- ${grup.nom}: `
-                        + `${grup.mida}`;
+                        +
+                        `${grup.mida}`;
 
 
-                    taula.appendChild(grupElement);
+                    taula.appendChild(
+                        grupElement
+                    );
+
                 }
 
 
-                resum.appendChild(taula);
+                resum.appendChild(
+                    taula
+                );
+
             }
 
 
-            resultat.appendChild(resum);
+            resultat.appendChild(
+                resum
+            );
         }
 
 
         // =====================================================
-        // MOSTRAR MISSATGES
+        // MISSATGES
         // =====================================================
 
         function mostrarMissatge(
@@ -813,14 +2851,18 @@ Pares 5"
         ) {
 
             const element =
-                document.getElementById("missatge");
+                document.getElementById(
+                    "missatge"
+                );
 
 
             element.textContent =
                 text;
 
+
             element.className =
                 tipus;
+
 
             element.style.display =
                 "block";
@@ -830,7 +2872,45 @@ Pares 5"
         function ocultarMissatge() {
 
             const element =
-                document.getElementById("missatge");
+                document.getElementById(
+                    "missatge"
+                );
+
+
+            element.style.display =
+                "none";
+        }
+
+
+        function mostrarErrorRestriccio(
+            id,
+            text
+        ) {
+
+            const element =
+                document.getElementById(
+                    id
+                );
+
+
+            element.textContent =
+                text;
+
+
+            element.style.display =
+                "block";
+        }
+
+
+        function ocultarMissatgeRestriccio(
+            id
+        ) {
+
+            const element =
+                document.getElementById(
+                    id
+                );
+
 
             element.style.display =
                 "none";
@@ -864,15 +2944,15 @@ Pares 5"
                     );
 
 
-                // Agafar el text del textarea
-
                 const text =
                     document.getElementById(
                         "textGrups"
                     ).value;
 
 
-                // Validacions
+                // ---------------------------------------------
+                // VALIDACIONS
+                // ---------------------------------------------
 
                 if (
                     isNaN(numTaules)
@@ -883,6 +2963,7 @@ Pares 5"
                     throw new Error(
                         "El número de taules no és vàlid."
                     );
+
                 }
 
 
@@ -895,80 +2976,117 @@ Pares 5"
                     throw new Error(
                         "La capacitat no és vàlida."
                     );
+
                 }
 
 
-                if (!text.trim()) {
+                if (
+                    !text.trim()
+                ) {
 
                     throw new Error(
                         "Escriu almenys un grup."
                     );
+
                 }
 
 
-                // Llegir grups
+                // ---------------------------------------------
+                // LLEGIR GRUPS
+                // ---------------------------------------------
 
                 const grups =
-                    llegirGrups(text);
+                    llegirGrups(
+                        text
+                    );
 
 
-                if (grups.length === 0) {
+                if (
+                    grups.length === 0
+                ) {
 
                     throw new Error(
                         "No s'ha trobat cap grup."
                     );
+
                 }
 
 
-                // Total persones
+                // ---------------------------------------------
+                // TOTAL PERSONES
+                // ---------------------------------------------
 
                 const totalPersones =
                     grups.reduce(
-                        (total, grup) =>
+                        (
+                            total,
+                            grup
+                        ) =>
                             total + grup.mida,
                         0
                     );
 
 
                 if (
-                    totalPersones >
+                    totalPersones
+                    >
                     numTaules * capacitat
                 ) {
 
                     throw new Error(
-                        "No hi ha prou cadires "
-                        + "per a tothom."
+                        "No hi ha prou cadires per a tothom."
                     );
+
                 }
 
 
-                // Comprovar grups individuals
+                // ---------------------------------------------
+                // COMPROVAR GRUPS INDIVIDUALS
+                // ---------------------------------------------
 
-                for (const grup of grups) {
+                for (
+                    const grup
+                    of grups
+                ) {
 
-                    if (grup.mida > capacitat) {
+                    if (
+                        grup.mida
+                        >
+                        capacitat
+                    ) {
 
                         throw new Error(
                             `El grup "${grup.nom}" `
-                            + `té ${grup.mida} persones `
-                            + `i no cap en una taula `
-                            + `de ${capacitat}.`
+                            +
+                            `té ${grup.mida} persones `
+                            +
+                            `i no cap en una taula `
+                            +
+                            `de ${capacitat}.`
                         );
+
                     }
+
                 }
 
 
-                // Repartir
+                // ---------------------------------------------
+                // REPARTIR
+                // ---------------------------------------------
 
                 const resultat =
                     repartirGrups(
                         grups,
                         numTaules,
-                        capacitat
+                        capacitat,
+                        restriccionsJunts,
+                        restriccionsSeparats
                     );
 
 
-                // Dibuixar
+                // ---------------------------------------------
+                // DIBUIXAR
+                // ---------------------------------------------
 
                 dibuixarTaules(
                     resultat.taules,
@@ -983,7 +3101,9 @@ Pares 5"
                 );
 
 
-            } catch (error) {
+            } catch (
+                error
+            ) {
 
                 mostrarMissatge(
                     error.message,
@@ -994,8 +3114,19 @@ Pares 5"
                 document.getElementById(
                     "resultat"
                 ).innerHTML = "";
+
             }
         }
+
+
+        // =====================================================
+        // INICIALITZAR UNA CAIXA A CADA SECCIÓ
+        // =====================================================
+
+        afegirCaixaJunt();
+
+        afegirCaixaSeparat();
+
 
     </script>
 
