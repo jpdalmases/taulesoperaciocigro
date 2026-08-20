@@ -545,7 +545,95 @@
 
         }
 
+
+        /* =====================================================
+           EDICIÓ MANUAL I DESCÀRREGA
+           ===================================================== */
+
+        .accions-resultat {
+            max-width: 900px;
+            margin: 15px auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .boto-secundari {
+            padding: 10px 16px;
+            border: 1px solid #aaa;
+            border-radius: 7px;
+            background: white;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .boto-secundari:hover {
+            background: #eee;
+        }
+
+        .taules.editable .taula {
+            cursor: grab;
+        }
+
+        .taules.editable .taula:active,
+        .taules.editable .grup:active {
+            cursor: grabbing;
+        }
+
+        .grup {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .grup.arrossegant {
+            opacity: 0.45;
+        }
+
+        .taula.arrossegant-taula {
+            opacity: 0.55;
+        }
+
+        .taula.zona-arrossegament,
+        .grup.zona-arrossegament {
+            outline: 3px dashed #777;
+            outline-offset: 2px;
+        }
+
+        .indicador-ordre {
+            font-size: 10px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        .ajuda-arrossegament {
+            max-width: 900px;
+            margin: 8px auto;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .error-arrossegament {
+            max-width: 900px;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 7px;
+            background: #ffd6d6;
+            color: #900;
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .accions-resultat {
+                align-items: stretch;
+            }
+        }
+
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
 <body>
@@ -759,6 +847,22 @@ Pares 5"
 
     <div id="missatge"></div>
 
+    <div class="accions-resultat">
+        <button type="button" class="boto-secundari" onclick="descarregarImatges()">
+            🖼️ Descarregar totes les imatges
+        </button>
+        <button type="button" class="boto-secundari" onclick="redistribuir()">
+            🔄 Provar una altra distribució
+        </button>
+    </div>
+
+    <div class="ajuda-arrossegament">
+        Pots arrossegar una <strong>taula sencera</strong> per canviar-ne l'ordre,
+        o arrossegar un <strong>grup</strong> a una altra taula o a una altra posició.
+        Les restriccions i la capacitat es comproven automàticament.
+    </div>
+    <div id="errorArrossegament" class="error-arrossegament"></div>
+
     <div id="resultat"></div>
 
 
@@ -826,6 +930,13 @@ Pares 5"
 
         let restriccionsSeparats = [];
 
+        // Estat de la distribució que es mostra. Es manté separat de
+        // l'algoritme perquè l'usuari pugui editar manualment el resultat.
+        let resultatActual = null;
+        let capacitatActual = 0;
+        let dragGrup = null;
+        let dragTaula = null;
+
 
         // =====================================================
         // LLEGIR GRUPS
@@ -892,6 +1003,10 @@ Pares 5"
 
                 }
 
+
+                if (grups.some(g => g.nom.toLowerCase() === nom.toLowerCase())) {
+                    throw new Error(`El grup "${nom}" apareix més d'una vegada.`);
+                }
 
                 grups.push({
 
@@ -2099,414 +2214,318 @@ Pares 5"
             consecutius,
             incompatibles
         ) {
+            // =====================================================
+            // CERCADOR ROBUST: BACKTRACKING + REINICIS ALEATORIS
+            // =====================================================
+            //
+            // La idea és no quedar-nos amb la primera decisió que sembla
+            // bona. A cada nivell triem el bloc que té MENYS opcions
+            // disponibles (first-fail). Si més endavant no hi ha lloc,
+            // tornem enrere i provem una altra taula.
 
-            // ---------------------------------------------
-            // Mapa d'incompatibilitats
-            // ---------------------------------------------
+            const incompatiblesMapa = new Map();
 
-            const incompatiblesMapa =
-                new Map();
-
-
-            for (
-                const parella
-                of incompatibles
-            ) {
-
-                const a =
-                    parella[0];
-
-                const b =
-                    parella[1];
-
-
-                if (
-                    !incompatiblesMapa.has(a)
-                ) {
-
-                    incompatiblesMapa.set(
-                        a,
-                        new Set()
-                    );
-
-                }
-
-
-                if (
-                    !incompatiblesMapa.has(b)
-                ) {
-
-                    incompatiblesMapa.set(
-                        b,
-                        new Set()
-                    );
-
-                }
-
-
-                incompatiblesMapa
-                    .get(a)
-                    .add(b);
-
-
-                incompatiblesMapa
-                    .get(b)
-                    .add(a);
-
+            for (const [a, b] of incompatibles) {
+                if (!incompatiblesMapa.has(a)) incompatiblesMapa.set(a, new Set());
+                if (!incompatiblesMapa.has(b)) incompatiblesMapa.set(b, new Set());
+                incompatiblesMapa.get(a).add(b);
+                incompatiblesMapa.get(b).add(a);
             }
 
+            const blocs = crearBlocs(grups, consecutius, incompatibles);
 
-            // ---------------------------------------------
-            // Crear blocs
-            // ---------------------------------------------
+            const midaBloc = bloc =>
+                bloc.reduce((total, grup) => total + grup.mida, 0);
 
-            const blocs =
-                crearBlocs(
-                    grups,
-                    consecutius,
-                    incompatibles
-                );
-
-
-            // ---------------------------------------------
-            // Comprovar mida blocs
-            // ---------------------------------------------
-
-            for (
-                const bloc
-                of blocs
-            ) {
-
-                const mida =
-                    bloc.reduce(
-                        (
-                            total,
-                            grup
-                        ) =>
-                            total + grup.mida,
-                        0
-                    );
-
-
-                if (
-                    mida > capacitat
-                ) {
-
-                    const noms =
-                        bloc
-                            .map(
-                                grup =>
-                                    grup.nom
-                            )
-                            .join(" + ");
-
-
+            for (const bloc of blocs) {
+                const mida = midaBloc(bloc);
+                if (mida > capacitat) {
+                    const noms = bloc.map(g => g.nom).join(" + ");
                     throw new Error(
-                        `El grup conjunt "${noms}" té ${mida} persones `
-                        +
-                        `i no cap en una taula de ${capacitat}.`
+                        `El grup conjunt "${noms}" té ${mida} persones i no cap en una taula de ${capacitat}.`
                     );
+                }
+            }
 
+            // Comprovació de compatibilitat amb el contingut actual de la taula.
+            function potAnar(bloc, taulaIndex, taules, ocupacio) {
+                const mida = midaBloc(bloc);
+                if (ocupacio[taulaIndex] + mida > capacitat) return false;
+
+                for (const grupBloc of bloc) {
+                    const incompatiblesGrup = incompatiblesMapa.get(grupBloc.nom);
+                    if (!incompatiblesGrup) continue;
+
+                    for (const grupTaula of taules[taulaIndex]) {
+                        if (incompatiblesGrup.has(grupTaula.nom)) {
+                            return false;
+                        }
+                    }
                 }
 
+                return true;
             }
 
+            // Puntuació d'una col·locació: intentem omplir millor les taules,
+            // però introduïm aleatorietat controlada per permetre altres camins.
+            function puntuacioColocacio(bloc, t, ocupacio) {
+                const novaOcupacio = ocupacio[t] + midaBloc(bloc);
+                const marge = capacitat - novaOcupacio;
+                return -marge + Math.random() * 0.25;
+            }
 
-            // ---------------------------------------------
-            // Ordenar blocs de més gran a més petit
-            // ---------------------------------------------
+            const millorSolucio = {
+                taules: null,
+                ocupacio: null
+            };
 
-            const blocsOrdenats =
-                [...blocs].sort(
-                    (
-                        a,
-                        b
-                    ) => {
+            // Una suma total inferior a la capacitat total és normal; l'objectiu
+            // és trobar qualsevol solució vàlida, no una ocupació perfecta.
+            const intentsMaxims = 80;
+            let solucioTrobada = false;
 
-                        const midaA =
-                            a.reduce(
-                                (
-                                    total,
-                                    grup
-                                ) =>
-                                    total + grup.mida,
-                                0
-                            );
+            // Primer intent determinista; després, diversos reinicis amb ordre
+            // aleatori. Això evita dependre d'un únic ordre desafortunat.
+            for (let intent = 0; intent < intentsMaxims && !solucioTrobada; intent++) {
+                const taules = Array.from({ length: numTaules }, () => []);
+                const ocupacio = Array(numTaules).fill(0);
+                const pendents = [...blocs];
 
-
-                        const midaB =
-                            b.reduce(
-                                (
-                                    total,
-                                    grup
-                                ) =>
-                                    total + grup.mida,
-                                0
-                            );
-
-
+                // Si l'entrada conté molts blocs, els intents posteriors tenen
+                // un petit component aleatori en l'ordre inicial.
+                if (intent === 0) {
+                    pendents.sort((a, b) => {
+                        const midaA = midaBloc(a);
+                        const midaB = midaBloc(b);
                         return midaB - midaA;
+                    });
+                } else {
+                    pendents.sort((a, b) => {
+                        const midaA = midaBloc(a);
+                        const midaB = midaBloc(b);
+                        if (midaA !== midaB) return midaB - midaA;
+                        return Math.random() - 0.5;
+                    });
+                }
 
-                    }
-                );
+                // Taules buides que són simètriques: no cal provar totes les
+                // còpies idèntiques, però sí diferents nivells d'ocupació.
+                function clauTaula(t) {
+                    return `${ocupacio[t]}|${taules[t].map(g => g.nom).sort().join("|")}`;
+                }
 
+                let nodes = 0;
+                const nodeLimit = 2000000;
 
-            // ---------------------------------------------
-            // Crear taules
-            // ---------------------------------------------
+                function buscar() {
+                    nodes++;
+                    if (nodes > nodeLimit) return false;
 
-            const taules = [];
+                    // No queda cap bloc: hem trobat una distribució completa.
+                    if (pendents.length === 0) return true;
 
-            const ocupacio = [];
+                    // -------------------------------------------------
+                    // FIRST-FAIL:
+                    // triar el bloc amb menys taules possibles.
+                    // -------------------------------------------------
+                    let millorIndex = -1;
+                    let millorsCandidats = null;
+                    let millorNombre = Infinity;
 
+                    for (let i = 0; i < pendents.length; i++) {
+                        const bloc = pendents[i];
+                        const candidats = [];
+                        const clausJaVistes = new Set();
 
-            for (
-                let i = 0;
-                i < numTaules;
-                i++
-            ) {
+                        for (let t = 0; t < numTaules; t++) {
+                            const clau = clauTaula(t);
+                            if (clausJaVistes.has(clau)) continue;
+                            clausJaVistes.add(clau);
 
-                taules.push([]);
-
-                ocupacio.push(0);
-
-            }
-
-
-            const ordre =
-                ordreCentral(
-                    numTaules
-                );
-
-
-            // ---------------------------------------------
-            // Repartir blocs
-            // ---------------------------------------------
-
-            for (
-                const bloc
-                of blocsOrdenats
-            ) {
-
-                let millorTaula =
-                    null;
-
-
-                let millorResultat =
-                    null;
-
-
-                for (
-                    const t
-                    of ordre
-                ) {
-
-                    if (
-                        blocPotAnarATaula(
-                            bloc,
-                            t,
-                            ocupacio,
-                            capacitat,
-                            incompatiblesMapa,
-                            taules
-                        )
-                    ) {
-
-                        const midaBloc =
-                            bloc.reduce(
-                                (
-                                    total,
-                                    grup
-                                ) =>
-                                    total + grup.mida,
-                                0
-                            );
-
-
-                        const novaOcupacio =
-                            ocupacio[t]
-                            +
-                            midaBloc;
-
-
-                        if (
-                            millorResultat === null
-                            ||
-                            novaOcupacio
-                            >
-                            millorResultat
-                        ) {
-
-                            millorResultat =
-                                novaOcupacio;
-
-
-                            millorTaula =
-                                t;
-
+                            if (potAnar(bloc, t, taules, ocupacio)) {
+                                candidats.push(t);
+                            }
                         }
 
+                        // Si aquest bloc no pot anar enlloc, aquest camí és impossible.
+                        if (candidats.length === 0) return false;
+
+                        // El bloc més restringit es resol primer.
+                        if (candidats.length < millorNombre) {
+                            millorNombre = candidats.length;
+                            millorIndex = i;
+                            millorsCandidats = candidats;
+
+                            if (millorNombre === 1) break;
+                        }
                     }
 
+                    const bloc = pendents[millorIndex];
+                    pendents.splice(millorIndex, 1);
+
+                    millorsCandidats.sort((a, b) => {
+                        const pa = puntuacioColocacio(bloc, a, ocupacio);
+                        const pb = puntuacioColocacio(bloc, b, ocupacio);
+                        return pb - pa;
+                    });
+
+                    for (const t of millorsCandidats) {
+                        if (!potAnar(bloc, t, taules, ocupacio)) continue;
+
+                        const mida = midaBloc(bloc);
+                        const llargadaAnterior = taules[t].length;
+
+                        for (const grup of bloc) {
+                            taules[t].push(grup);
+                        }
+                        ocupacio[t] += mida;
+
+                        if (buscar()) return true;
+
+                        // BACKTRACK REAL: desfem exactament el moviment anterior.
+                        ocupacio[t] -= mida;
+                        taules[t].splice(llargadaAnterior, bloc.length);
+                    }
+
+                    // Tornem a posar el bloc pendent al seu lloc perquè el nivell
+                    // pare pugui continuar correctament.
+                    pendents.splice(millorIndex, 0, bloc);
+                    return false;
                 }
 
-
-                // -----------------------------------------
-                // No hi ha taula possible
-                // -----------------------------------------
-
-                if (
-                    millorTaula === null
-                ) {
-
-                    const noms =
-                        bloc
-                            .map(
-                                grup =>
-                                    grup.nom
-                            )
-                            .join(" + ");
-
-
-                    throw new Error(
-                        `No s'ha pogut col·locar "${noms}" `
-                        +
-                        `respectant les restriccions.`
-                    );
-
+                if (buscar()) {
+                    solucioTrobada = true;
+                    millorSolucio.taules = taules.map(t => [...t]);
+                    millorSolucio.ocupacio = [...ocupacio];
                 }
-
-
-                // -----------------------------------------
-                // Afegir el bloc sencer
-                //
-                // Això garanteix que els grups junts
-                // queden consecutius.
-                // -----------------------------------------
-
-                for (
-                    const grup
-                    of bloc
-                ) {
-
-                    taules[millorTaula]
-                        ?.push(grup);
-
-                }
-
-
-                // Corregim l'assignació de manera explícita
-                // per evitar qualsevol ambigüitat.
-
-                for (
-                    const grup
-                    of bloc
-                ) {
-
-                    // Si encara no s'ha afegit correctament,
-                    // no fem res aquí.
-                }
-
-
-                // Calculem l'ocupació del bloc
-
-                const midaBloc =
-                    bloc.reduce(
-                        (
-                            total,
-                            grup
-                        ) =>
-                            total + grup.mida,
-                        0
-                    );
-
-
-                ocupacio[millorTaula]
-                    += midaBloc;
-
             }
 
-
-            // =================================================
-            // REORDENAR TAULES
-            // =================================================
-
-            const dades = [];
-
-
-            for (
-                let i = 0;
-                i < numTaules;
-                i++
-            ) {
-
-                dades.push({
-
-                    taula:
-                        taules[i],
-
-                    ocup:
-                        ocupacio[i]
-
-                });
-
-            }
-
-
-            dades.sort(
-                (
-                    a,
-                    b
-                ) =>
-                    b.ocup - a.ocup
-            );
-
-
-            const taulesNoves =
-                Array(
-                    numTaules
+            if (!solucioTrobada) {
+                throw new Error(
+                    "No s'ha trobat cap distribució vàlida després de provar moltes combinacions. " +
+                    "Si saps que existeix, prova de tornar a prémer «Distribuir grups»: es provarà un altre ordre aleatori."
                 );
-
-
-            const ocupacioNova =
-                Array(
-                    numTaules
-                );
-
-
-            for (
-                let i = 0;
-                i < ordre.length;
-                i++
-            ) {
-
-                const posicio =
-                    ordre[i];
-
-
-                const dada =
-                    dades[i];
-
-
-                taulesNoves[posicio] =
-                    dada.taula;
-
-
-                ocupacioNova[posicio] =
-                    dada.ocup;
-
             }
 
+            // Posem les taules més plenes al centre, mantenint el comportament
+            // visual de la versió original.
+            const dades = millorSolucio.taules.map((taula, i) => ({
+                taula,
+                ocup: millorSolucio.ocupacio[i]
+            }));
+
+            dades.sort((a, b) => b.ocup - a.ocup);
+
+            const ordre = ordreCentral(numTaules);
+            const taulesNoves = Array(numTaules);
+            const ocupacioNova = Array(numTaules);
+
+            for (let i = 0; i < ordre.length; i++) {
+                const posicio = ordre[i];
+                const dada = dades[i];
+                taulesNoves[posicio] = dada.taula;
+                ocupacioNova[posicio] = dada.ocup;
+            }
 
             return {
-
-                taules:
-                    taulesNoves,
-
-                ocupacio:
-                    ocupacioNova
-
+                taules: taulesNoves,
+                ocupacio: ocupacioNova
             };
+        }
+
+        // =====================================================
+        // VALIDACIÓ DE L'EDICIÓ MANUAL
+        // =====================================================
+
+        function calcularOcupacioTaula(taula) {
+            return taula.reduce((total, grup) => total + grup.mida, 0);
+        }
+
+        function construirMapaIncompatibles() {
+            const mapa = new Map();
+
+            for (const [a, b] of restriccionsSeparats) {
+                if (!mapa.has(a)) mapa.set(a, new Set());
+                if (!mapa.has(b)) mapa.set(b, new Set());
+                mapa.get(a).add(b);
+                mapa.get(b).add(a);
+            }
+
+            return mapa;
+        }
+
+        function validarDistribucio(taules) {
+            const mapa = construirMapaIncompatibles();
+            const posicions = new Map();
+
+            for (let t = 0; t < taules.length; t++) {
+                const ocup = calcularOcupacioTaula(taules[t]);
+                if (ocup > capacitatActual) {
+                    return `La taula ${t + 1} supera la capacitat (${ocup}/${capacitatActual}).`;
+                }
+
+                for (let i = 0; i < taules[t].length; i++) {
+                    const g = taules[t][i];
+
+                    if (posicions.has(g.nom)) {
+                        return `El grup "${g.nom}" apareix més d'una vegada.`;
+                    }
+                    posicions.set(g.nom, { taula: t, index: i });
+
+                    for (const altre of taules[t]) {
+                        if (g !== altre && mapa.get(g.nom)?.has(altre.nom)) {
+                            return `Els grups "${g.nom}" i "${altre.nom}" no poden compartir taula.`;
+                        }
+                    }
+                }
+            }
+
+            // Els grups "junts" han d'estar a la mateixa taula i consecutius.
+            for (const bloc of restriccionsJunts) {
+                let taulaBloc = null;
+                let indices = [];
+
+                for (const nom of bloc) {
+                    const pos = posicions.get(nom);
+                    if (!pos) return `No s'ha trobat el grup "${nom}".`;
+
+                    if (taulaBloc === null) taulaBloc = pos.taula;
+                    if (taulaBloc !== pos.taula) {
+                        return `Els grups "${bloc.join(" + ")}" han d'estar a la mateixa taula.`;
+                    }
+
+                    indices.push(pos.index);
+                }
+
+                indices.sort((a, b) => a - b);
+
+                for (let i = 1; i < indices.length; i++) {
+                    if (indices[i] !== indices[i - 1] + 1) {
+                        return `Els grups "${bloc.join(" + ")}" han d'estar junts i consecutius.`;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function mostrarErrorArrossegament(text) {
+            const e = document.getElementById("errorArrossegament");
+            e.textContent = text;
+            e.style.display = "block";
+            clearTimeout(mostrarErrorArrossegament.timer);
+            mostrarErrorArrossegament.timer = setTimeout(() => {
+                e.style.display = "none";
+            }, 3500);
+        }
+
+        function actualitzarOcupacions() {
+            if (!resultatActual) return;
+            resultatActual.ocupacio = resultatActual.taules.map(calcularOcupacioTaula);
+        }
+
+        function redistribuir() {
+            calcular();
         }
 
 
@@ -2514,208 +2533,223 @@ Pares 5"
         // DIBUIXAR TAULES
         // =====================================================
 
+        // =====================================================
+
         function dibuixarTaules(
             taules,
             ocupacio,
             capacitat
         ) {
-
-            const resultat =
-                document.getElementById(
-                    "resultat"
-                );
-
-
+            const resultat = document.getElementById("resultat");
             resultat.innerHTML = "";
 
+            resultatActual = {
+                taules: taules.map(t => [...t]),
+                ocupacio: [...ocupacio]
+            };
+            capacitatActual = capacitat;
 
-            const contenidor =
-                document.createElement(
-                    "div"
-                );
-
-
-            contenidor.className =
-                "taules";
-
+            const contenidor = document.createElement("div");
+            contenidor.className = "taules editable";
+            contenidor.id = "contenidorTaules";
 
             const colors = {};
-
             let numeroColor = 0;
 
+            function trobarIndexTaula(element) {
+                return [...contenidor.children].indexOf(element);
+            }
 
-            for (
-                let i = 0;
-                i < taules.length;
-                i++
-            ) {
+            function crearTaula(taulaDades, index) {
+                const taula = document.createElement("div");
+                taula.className = "taula";
+                taula.draggable = true;
+                taula.dataset.index = index;
 
-                const taula =
-                    document.createElement(
-                        "div"
-                    );
+                taula.addEventListener("dragstart", e => {
+                    if (e.target.closest(".grup")) {
+                        e.stopPropagation();
+                        return;
+                    }
+                    dragTaula = taula;
+                    taula.classList.add("arrossegant-taula");
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", "taula:" + index);
+                });
 
+                taula.addEventListener("dragend", () => {
+                    taula.classList.remove("arrossegant-taula");
+                    document.querySelectorAll(".zona-arrossegament")
+                        .forEach(e => e.classList.remove("zona-arrossegament"));
+                    dragTaula = null;
+                });
 
-                taula.className =
-                    "taula";
+                taula.addEventListener("dragover", e => {
+                    if (dragGrup) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        taula.classList.add("zona-arrossegament");
+                    }
+                });
 
+                taula.addEventListener("dragleave", e => {
+                    if (!taula.contains(e.relatedTarget)) {
+                        taula.classList.remove("zona-arrossegament");
+                    }
+                });
 
-                // -----------------------------------------
-                // CAPÇALERA
-                // -----------------------------------------
+                taula.addEventListener("drop", e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    taula.classList.remove("zona-arrossegament");
 
-                const header =
-                    document.createElement(
-                        "div"
-                    );
+                    if (dragGrup) {
+                        moureGrup(dragGrup.taulaIndex, dragGrup.grupIndex, index, taulaDades.length);
+                    } else if (dragTaula && dragTaula !== taula) {
+                        const origen = trobarIndexTaula(dragTaula);
+                        const desti = trobarIndexTaula(taula);
+                        reordenarTaulesDOM(origen, desti);
+                    }
+                });
 
+                const header = document.createElement("div");
+                header.className = "taula-header";
 
-                header.className =
-                    "taula-header";
+                const nomTaula = document.createElement("div");
+                nomTaula.className = "taula-nom";
+                nomTaula.textContent = `TAULA ${index + 1}`;
 
+                const ocupacioText = document.createElement("div");
+                ocupacioText.className = "ocupacio";
+                ocupacioText.textContent = `${calcularOcupacioTaula(taulaDades)}/${capacitat}`;
 
-                const nomTaula =
-                    document.createElement(
-                        "div"
-                    );
+                const percentatge = document.createElement("div");
+                percentatge.className = "percentatge";
+                const percent = capacitat ? calcularOcupacioTaula(taulaDades) / capacitat * 100 : 0;
+                percentatge.textContent = `${Math.round(percent)}%`;
 
+                header.appendChild(nomTaula);
+                header.appendChild(ocupacioText);
+                header.appendChild(percentatge);
+                taula.appendChild(header);
 
-                nomTaula.className =
-                    "taula-nom";
-
-
-                nomTaula.textContent =
-                    `TAULA ${i + 1}`;
-
-
-                const ocupacioText =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                ocupacioText.className =
-                    "ocupacio";
-
-
-                ocupacioText.textContent =
-                    `${ocupacio[i]}/${capacitat}`;
-
-
-                const percentatge =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                percentatge.className =
-                    "percentatge";
-
-
-                const percent =
-                    ocupacio[i]
-                    /
-                    capacitat
-                    *
-                    100;
-
-
-                percentatge.textContent =
-                    `${Math.round(percent)}%`;
-
-
-                header.appendChild(
-                    nomTaula
-                );
-
-
-                header.appendChild(
-                    ocupacioText
-                );
-
-
-                header.appendChild(
-                    percentatge
-                );
-
-
-                taula.appendChild(
-                    header
-                );
-
-
-                // -----------------------------------------
-                // GRUPS
-                // -----------------------------------------
-
-                for (
-                    const grup
-                    of taules[i]
-                ) {
-
-                    if (
-                        !colors[grup.nom]
-                    ) {
-
+                taulaDades.forEach((grup, grupIndex) => {
+                    if (!colors[grup.nom]) {
                         colors[grup.nom] =
-                            colorsDisponibles[
-                                numeroColor
-                                %
-                                colorsDisponibles.length
-                            ];
-
-
+                            colorsDisponibles[numeroColor % colorsDisponibles.length];
                         numeroColor++;
                     }
 
+                    const bloc = document.createElement("div");
+                    bloc.className = "grup";
+                    bloc.draggable = true;
+                    bloc.style.backgroundColor = colors[grup.nom];
+                    bloc.textContent = `${grup.nom} (${grup.mida})`;
+                    bloc.title = "Arrossega per moure aquest grup";
 
-                    const bloc =
-                        document.createElement(
-                            "div"
-                        );
+                    bloc.addEventListener("dragstart", e => {
+                        e.stopPropagation();
+                        dragGrup = { taulaIndex: index, grupIndex };
+                        bloc.classList.add("arrossegant");
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", "grup:" + index + ":" + grupIndex);
+                    });
 
+                    bloc.addEventListener("dragend", e => {
+                        e.stopPropagation();
+                        bloc.classList.remove("arrossegant");
+                        document.querySelectorAll(".zona-arrossegament")
+                            .forEach(el => el.classList.remove("zona-arrossegament"));
+                        dragGrup = null;
+                    });
 
-                    bloc.className =
-                        "grup";
+                    bloc.addEventListener("dragover", e => {
+                        if (dragGrup) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            bloc.classList.add("zona-arrossegament");
+                        }
+                    });
 
+                    bloc.addEventListener("dragleave", () => {
+                        bloc.classList.remove("zona-arrossegament");
+                    });
 
-                    bloc.style.backgroundColor =
-                        colors[grup.nom];
+                    bloc.addEventListener("drop", e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        bloc.classList.remove("zona-arrossegament");
 
+                        if (dragGrup) {
+                            moureGrup(dragGrup.taulaIndex, dragGrup.grupIndex, index, grupIndex);
+                        }
+                    });
 
-                    bloc.textContent =
-                        `${grup.nom} (${grup.mida})`;
+                    taula.appendChild(bloc);
+                });
 
-
-                    taula.appendChild(
-                        bloc
-                    );
-
-                }
-
-
-                contenidor.appendChild(
-                    taula
-                );
-
+                return taula;
             }
 
+            taules.forEach((taulaDades, index) => {
+                contenidor.appendChild(crearTaula(taulaDades, index));
+            });
 
-            resultat.appendChild(
-                contenidor
-            );
+            resultat.appendChild(contenidor);
+            crearResum(resultatActual.taules, resultatActual.ocupacio, capacitat);
+        }
 
+        function reordenarTaulesDOM(origen, desti) {
+            if (!resultatActual || origen === desti || origen < 0 || desti < 0) return;
 
-            crearResum(
-                taules,
-                ocupacio,
-                capacitat
-            );
+            const taules = resultatActual.taules;
+            const ocupacions = resultatActual.ocupacio;
+
+            const [taula] = taules.splice(origen, 1);
+            const [ocup] = ocupacions.splice(origen, 1);
+
+            taules.splice(desti, 0, taula);
+            ocupacions.splice(desti, 0, ocup);
+
+            dibuixarTaules(taules, ocupacions, capacitatActual);
+        }
+
+        function moureGrup(origenTaula, origenGrup, destiTaula, destiIndex) {
+            if (!resultatActual) return;
+            if (origenTaula === destiTaula && (destiIndex === origenGrup || destiIndex === origenGrup + 1)) {
+                return;
+            }
+
+            const taulesProva = resultatActual.taules.map(t => [...t]);
+            const [grup] = taulesProva[origenTaula].splice(origenGrup, 1);
+
+            // Si movem dins la mateixa taula, després d'eliminar cal ajustar l'índex.
+            if (origenTaula === destiTaula && destiIndex > origenGrup) {
+                destiIndex--;
+            }
+
+            if (destiIndex === undefined || destiIndex === null) {
+                destiIndex = taulesProva[destiTaula].length;
+            }
+
+            taulesProva[destiTaula].splice(destiIndex, 0, grup);
+
+            const error = validarDistribucio(taulesProva);
+
+            if (error) {
+                mostrarErrorArrossegament(error);
+                return;
+            }
+
+            resultatActual.taules = taulesProva;
+            actualitzarOcupacions();
+            dibuixarTaules(resultatActual.taules, resultatActual.ocupacio, capacitatActual);
         }
 
 
         // =====================================================
         // RESUM
+
         // =====================================================
 
         function crearResum(
@@ -2840,6 +2874,214 @@ Pares 5"
             );
         }
 
+
+
+        // =====================================================
+        // DESCÀRREGA DE TOTES LES IMATGES
+        // =====================================================
+
+        function esperar(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function dataSeguraNom() {
+            const data = new Date();
+            return (
+                `${data.getFullYear()}-` +
+                `${String(data.getMonth() + 1).padStart(2, "0")}-` +
+                `${String(data.getDate()).padStart(2, "0")}-` +
+                `${String(data.getHours()).padStart(2, "0")}-` +
+                `${String(data.getMinutes()).padStart(2, "0")}`
+            );
+        }
+
+        async function crearCanvasPNG(element, opcions = {}) {
+            if (typeof html2canvas !== "function") {
+                throw new Error("No s'ha pogut carregar el mòdul d'imatges.");
+            }
+
+            return await html2canvas(element, {
+                backgroundColor: "#ffffff",
+                scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+                useCORS: true,
+                logging: false,
+                ...opcions
+            });
+        }
+
+        function descarregarCanvas(canvas, nomFitxer) {
+            const enllaç = document.createElement("a");
+            enllaç.download = nomFitxer;
+            enllaç.href = canvas.toDataURL("image/png");
+            document.body.appendChild(enllaç);
+            enllaç.click();
+            enllaç.remove();
+        }
+
+        async function descarregarImatges() {
+            const element = document.getElementById("resultat");
+            const contenidorTaules = document.querySelector("#resultat .taules");
+            const resum = document.querySelector("#resultat .resum");
+
+            if (!element || !contenidorTaules || !resum) {
+                mostrarErrorArrossegament("Primer has de generar una distribució.");
+                return;
+            }
+
+            try {
+                if (typeof html2canvas !== "function") {
+                    throw new Error("No s'ha pogut carregar el mòdul d'imatges (html2canvas).");
+                }
+                if (typeof JSZip !== "function") {
+                    throw new Error("No s'ha pogut carregar el mòdul ZIP (JSZip).");
+                }
+
+                const marca = dataSeguraNom();
+                const escales = {
+                    scale: Math.min(3, Math.max(2, window.devicePixelRatio || 1))
+                };
+
+                const fitxers = [];
+
+                // 1. Distribució completa
+                const canvasDistribucio = await crearCanvasPNG(contenidorTaules, escales);
+                fitxers.push({
+                    nom: `01-distribucio-taules-${marca}.png`,
+                    blob: await new Promise(resolve => canvasDistribucio.toBlob(resolve, "image/png"))
+                });
+
+                // 2. Llista/resum inferior
+                const canvasResum = await crearCanvasPNG(resum, escales);
+                fitxers.push({
+                    nom: `02-llista-resum-${marca}.png`,
+                    blob: await new Promise(resolve => canvasResum.toBlob(resolve, "image/png"))
+                });
+
+                // 3. Una imatge real per cada taula.
+                // La còpia es manté dins del viewport, però invisible, perquè html2canvas
+                // pugui calcular correctament amplada, alçada i estils.
+                const taulesDOM = Array.from(
+                    contenidorTaules.querySelectorAll(":scope > .taula")
+                );
+
+                const zonaCaptura = document.createElement("div");
+                zonaCaptura.style.position = "fixed";
+                zonaCaptura.style.left = "0";
+                zonaCaptura.style.top = "0";
+                zonaCaptura.style.width = "100vw";
+                zonaCaptura.style.height = "100vh";
+                zonaCaptura.style.overflow = "hidden";
+                zonaCaptura.style.pointerEvents = "none";
+                zonaCaptura.style.opacity = "0";
+                zonaCaptura.style.zIndex = "-9999";
+                zonaCaptura.style.background = "white";
+                document.body.appendChild(zonaCaptura);
+
+                try {
+                    for (let i = 0; i < taulesDOM.length; i++) {
+                        const taula = taulesDOM[i];
+                        const embolcall = document.createElement("div");
+                        embolcall.style.position = "absolute";
+                        embolcall.style.left = "20px";
+                        embolcall.style.top = "20px";
+                        embolcall.style.padding = "24px";
+                        embolcall.style.background = "#ffffff";
+                        embolcall.style.width = "fit-content";
+                        embolcall.style.height = "fit-content";
+                        embolcall.style.display = "block";
+
+                        const clon = taula.cloneNode(true);
+                        clon.style.margin = "0";
+                        clon.style.width = getComputedStyle(taula).width;
+                        clon.style.minHeight = getComputedStyle(taula).minHeight;
+                        clon.style.height = "auto";
+                        clon.style.boxShadow = "none";
+                        clon.style.cursor = "default";
+                        clon.classList.remove("arrossegant-taula", "zona-arrossegament");
+                        clon.querySelectorAll(".arrossegant, .zona-arrossegament")
+                            .forEach(el => el.classList.remove("arrossegant", "zona-arrossegament"));
+
+                        embolcall.appendChild(clon);
+                        zonaCaptura.appendChild(embolcall);
+
+                        // Donem un frame perquè el navegador recalculi layout abans de capturar.
+                        await new Promise(requestAnimationFrame);
+                        await esperar(30);
+
+                        const canvasTaula = await crearCanvasPNG(embolcall, {
+                            ...escales,
+                            width: embolcall.scrollWidth,
+                            height: embolcall.scrollHeight,
+                            windowWidth: Math.max(window.innerWidth, embolcall.scrollWidth + 40),
+                            windowHeight: Math.max(window.innerHeight, embolcall.scrollHeight + 40)
+                        });
+
+                        fitxers.push({
+                            nom: `taula-${String(i + 1).padStart(2, "0")}-${marca}.png`,
+                            blob: await new Promise(resolve => canvasTaula.toBlob(resolve, "image/png"))
+                        });
+
+                        embolcall.remove();
+                    }
+                } finally {
+                    zonaCaptura.remove();
+                }
+
+                // 4. Posem TOTES les imatges dins d'un ZIP.
+                // Això evita que Chrome/Edge/Safari bloquegin les descàrregues múltiples.
+                const zip = new JSZip();
+                const carpeta = zip.folder(`distribucio-taules-${marca}`);
+
+                for (const fitxer of fitxers) {
+                    carpeta.file(fitxer.nom, fitxer.blob);
+                }
+
+                const zipBlob = await zip.generateAsync({
+                    type: "blob",
+                    compression: "DEFLATE",
+                    compressionOptions: { level: 6 }
+                });
+
+                const urlZip = URL.createObjectURL(zipBlob);
+                const enllacZip = document.createElement("a");
+                enllacZip.href = urlZip;
+                enllacZip.download = `distribucio-taules-${marca}.zip`;
+                document.body.appendChild(enllacZip);
+                enllacZip.click();
+                enllacZip.remove();
+                setTimeout(() => URL.revokeObjectURL(urlZip), 5000);
+
+                // També intentem baixar-les individualment. Si el navegador ho bloqueja,
+                // el ZIP continua contenint totes les imatges.
+                for (const fitxer of fitxers) {
+                    const url = URL.createObjectURL(fitxer.blob);
+                    const enllac = document.createElement("a");
+                    enllac.href = url;
+                    enllac.download = fitxer.nom;
+                    document.body.appendChild(enllac);
+                    enllac.click();
+                    enllac.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 3000);
+                    await esperar(350);
+                }
+
+                mostrarMissatge(
+                    `S'han creat ${fitxers.length} imatges. S'ha descarregat un ZIP amb totes i també s'ha intentat descarregar-les individualment.`,
+                    "info"
+                );
+
+            } catch (error) {
+                console.error(error);
+                mostrarErrorArrossegament(
+                    `Error en crear les imatges: ${error.message}`
+                );
+            }
+        }
+
+        // Compatibilitat amb versions anteriors
+        async function descarregarImatge() {
+            await descarregarImatges();
+        }
 
         // =====================================================
         // MISSATGES
